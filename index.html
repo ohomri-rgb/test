@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>פורטל דוחות</title>
+    <!-- Tableau Extensions API JS Library -->
+    <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api@main/lib/tableau.extensions.1.latest.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header & Navigation Bar -->
+    <header class="top-nav">
+        <div class="logo">פורטל הדוחות <span>Tableau Portal</span></div>
+        <nav id="category-tabs"></nav>
+    </header>
+
+    <!-- MAIN VIEW: Category Grid -->
+    <main id="main-view" class="view-section active">
+        <section class="hero-section">
+            <h1>כל הדוחות של הארגון במקום אחד</h1>
+            <div class="search-container">
+                <input type="text" id="global-search" placeholder="חיפוש דשבורד בכל הקטגוריות..." autocomplete="off">
+                <div id="autocomplete-results" class="autocomplete-dropdown"></div>
+            </div>
+        </section>
+
+        <section class="categories-section">
+            <h2>קטגוריות</h2>
+            <div id="categories-grid" class="cards-grid"></div>
+        </section>
+    </main>
+
+    <!-- SUB VIEW: Dashboards List in Category -->
+    <main id="sub-view" class="view-section">
+        <div class="breadcrumb">
+            <button id="back-btn" class="btn-back">&rarr; חזרה לכל הקטגוריות</button>
+        </div>
+        
+        <header class="category-header">
+            <h1 id="selected-category-title">קטגוריה</h1>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="category-search" placeholder="חיפוש דשבורד בקטגוריה זו..." autocomplete="off">
+        </div>
+
+        <div id="dashboards-list" class="dashboards-list"></div>
+    </main>
+
+    <!-- Hover Preview Floating Image -->
+    <div id="preview-tooltip" class="preview-tooltip">
+        <img id="preview-img" src="" alt="תמונה מקדימה">
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
