@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>פורטל דוחות</title>
-    <!-- Tableau Extensions API JS Library -->
-    <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api@main/lib/tableau.extensions.1.latest.js"></script>
+    <!-- טעינת ספריית ה-API של Tableau -->
+    <script src="tableau.extensions.1.latest.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Header & Navigation Bar -->
-    <header class="top-nav">
-        <div class="logo">פורטל הדוחות <span>Tableau Portal</span></div>
-        <nav id="category-tabs"></nav>
-    </header>
+    <div id="statusMessage"></div>
 
     <!-- MAIN VIEW: Category Grid -->
     <main id="main-view" class="view-section active">
@@ -40,10 +36,6 @@
         <header class="category-header">
             <h1 id="selected-category-title">קטגוריה</h1>
         </header>
-
-        <div class="search-container">
-            <input type="text" id="category-search" placeholder="חיפוש דשבורד בקטגוריה זו..." autocomplete="off">
-        </div>
 
         <div id="dashboards-list" class="dashboards-list"></div>
     </main>
