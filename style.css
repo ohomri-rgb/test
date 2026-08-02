@@ -1,356 +1,166 @@
 :root {
-    --primary-purple: #543b93;
-    --primary-purple-hover: #473080;
-    --primary-purple-light: #f3f0fa;
-    --purple-border: #dcd4f0;
-    
-    --bg-light: #f8fafc;
+    --primary-color: #005f73;
+    --bg-color: #f8fafc;
     --card-bg: #ffffff;
-    --border-color: #cbd5e1;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    --text-color: #1e293b;
+    --border-color: #e2e8f0;
 }
 
 body {
-    background-color: var(--bg-light);
-    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
     direction: rtl;
 }
 
-/* Header */
 .top-nav {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    background: #ffffff;
-    padding: 14px 32px;
-    border-bottom: 2px solid #e2e8f0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+
 }
 
-/* הגבלת גודל הלוגו הראשי כדי למנוע מריחה */
-.brand-logo-img {
-    width: 36px;            /* רוחב מוגדר קבוע */
-    height: 36px;           /* גובה מוגדר קבוע */
-    object-fit: contain;    /* שומר על פרופורציות התמונה ללא עיוות */
-    border-radius: 8px;     /* עיגול פינות קל (רשות) */
+.logo {
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: var(--text-color);
 }
 
-.brand:hover .brand-title {
-    color: var(--primary-purple);
+.logo span {
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-right: 6px;
 }
 
-.brand-icon {
-    font-size: 22px;
-    background: var(--primary-purple);
-    color: white;
-    padding: 8px 10px;
-    border-radius: 10px;
-}
-
-.brand-text {
-    display: flex;
-    flex-direction: column;
-}
-
-.brand-title {
-    font-weight: 800;
-    font-size: 17px;
-    color: var(--text-main);
-    transition: color 0.2s;
-}
-
-.brand-subtitle {
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-.category-tabs {
-    display: flex;
-    gap: 8px;
-}
-
-.tab-btn {
-    border: none;
-    background: transparent;
-    padding: 8px 18px;
-    border-radius: 20px;
-    font-size: 14px;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.tab-btn.active, .tab-btn:hover {
-    background: var(--primary-purple-light);
-    color: var(--primary-purple);
-    font-weight: 700;
-}
-
-/* Views Management */
-.view-container {
-    display: none;
-}
-
-.view-container.active {
-    display: block;
-}
-
-/* Hero Section */
 .hero-section {
-    background: linear-gradient(135deg, var(--primary-purple) 0%, #3b276b 100%);
+    background: linear-gradient(135deg, #005f73, #0a9396);
     color: white;
-    padding: 55px 20px;
+    padding: 3rem 2rem;
     text-align: center;
 }
 
-.hero-section h1 {
-    font-size: 30px;
-    margin-bottom: 22px;
-}
-
-.search-box-wrapper {
+.search-container {
     position: relative;
     max-width: 600px;
-    margin: 0 auto;
+    margin: 1.5rem auto 0;
 }
 
-.search-box-wrapper input {
+.search-container input {
     width: 100%;
-    padding: 14px 20px 14px 45px;
-    border-radius: 30px;
-    border: 1px solid var(--border-color);
-    font-size: 15px;
+    padding: 0.8rem 1.2rem;
+    border-radius: 25px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
     outline: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    color: var(--text-main);
-    background: white;
 }
 
-.search-icon {
-    position: absolute;
-    left: 18px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-}
-
-.filter-bar {
-    max-width: 1200px;
-    margin: 0 auto 28px auto;
-    padding: 0 20px;
-}
-
-/* Autocomplete Dropdown Custom Styling */
 .autocomplete-dropdown {
     position: absolute;
-    top: 105%;
+    top: 100%;
     left: 0;
     right: 0;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    list-style: none;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 100;
+    color: #333;
+    text-align: right;
     max-height: 250px;
     overflow-y: auto;
-    z-index: 1000;
-    display: none;
-    text-align: right;
-    border: 1px solid var(--border-color);
 }
 
-.autocomplete-dropdown li {
-    padding: 12px 20px;
+.autocomplete-item {
+    padding: 10px 15px;
     cursor: pointer;
-    border-bottom: 1px solid #f1f5f9;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background 0.15s ease;
+    border-bottom: 1px solid #eee;
 }
 
-.autocomplete-dropdown li strong {
-    color: #0f172a;
-    font-size: 14px;
-    font-weight: 600;
+.autocomplete-item:hover {
+    background-color: #f1f5f9;
 }
 
-.autocomplete-dropdown li small {
-    color: #64748b;
-    font-size: 12px;
-}
-
-.autocomplete-dropdown li:hover {
-    background-color: var(--primary-purple-light);
-}
-
-.autocomplete-dropdown li:hover strong {
-    color: var(--primary-purple);
-}
-
-/* Content & Grid */
-.content-section {
-    max-width: 1200px;
-    margin: 36px auto;
-    padding: 0 20px;
-}
-
-.content-section h2 {
-    margin-bottom: 20px;
-    font-size: 20px;
-}
-
-.categories-grid {
+.cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
 }
 
 .category-card {
     background: var(--card-bg);
-    border: 1px solid var(--purple-border);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s, box-shadow 0.2s;
+    padding: 1.5rem;
     cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .category-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(84, 59, 147, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
 }
 
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+.view-section {
+    display: none;
 }
 
-.card-title {
-    font-size: 19px;
-    font-weight: 700;
+.view-section.active {
+    display: block;
 }
 
-.card-icon {
-    font-size: 22px;
-    background: var(--primary-purple-light);
-    color: var(--primary-purple);
-    padding: 10px;
-    border-radius: 10px;
-}
-
-.card-desc {
-    color: var(--text-muted);
-    font-size: 13px;
-    margin-bottom: 20px;
-}
-
-.card-footer-link {
-    color: var(--primary-purple);
-    font-weight: 700;
-    font-size: 14px;
-}
-
-/* Sub-View & Dashboard Row Items */
-.sub-header-nav {
-    max-width: 1200px;
-    margin: 20px auto 0;
-    padding: 0 20px;
-}
-
-.btn-back {
-    background: none;
-    border: none;
-    color: var(--primary-purple);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.category-title-area {
-    max-width: 1200px;
-    margin: 10px auto 20px;
-    padding: 0 20px;
-}
-
+/* Dashboard Row styling */
 .dashboards-list {
-    max-width: 1200px;
-    margin: 0 auto 40px;
-    padding: 0 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    padding: 2rem;
 }
 
 .dashboard-row {
-    background: var(--card-bg);
+    background: white;
     border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 18px 24px;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.8rem;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    cursor: pointer;
+    align-items: center;
+    position: relative;
 }
 
 .dashboard-row:hover {
-    border-color: var(--primary-purple);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.dash-info {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.dash-icon {
-    font-size: 20px;
-    background: var(--primary-purple-light);
-    color: var(--primary-purple);
-    padding: 8px;
-    border-radius: 8px;
-}
-
-.dash-details h4 {
-    font-size: 16px;
-    color: var(--text-main);
-}
-
-.dash-details p {
-    font-size: 12px;
-    color: var(--text-muted);
+    background-color: #f8fafc;
 }
 
 .btn-open {
-    padding: 8px 18px;
-    border: 1px solid var(--primary-purple);
-    border-radius: 8px;
-    background: white;
-    color: var(--primary-purple);
+    padding: 0.5rem 1rem;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
     text-decoration: none;
-    font-size: 13px;
-    font-weight: 700;
-    transition: all 0.2s;
 }
 
-.btn-open:hover {
-    background: var(--primary-purple);
-    color: white;
+/* Tooltip Preview Styling */
+.preview-tooltip {
+    position: fixed;
+    display: none;
+    pointer-events: none;
+    z-index: 1000;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    background: white;
+    border: 2px solid var(--primary-color);
+}
+
+.preview-tooltip img {
+    display: block;
+    width: 320px;
+    height: auto;
 }
