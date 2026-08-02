@@ -31,14 +31,12 @@
             const dashIdx = columns.findIndex(c => c.fieldName === "דשבורד" || c.fieldName === "Dashboard");
             const descIdx = columns.findIndex(c => c.fieldName === "תיאור" || c.fieldName === "Description");
             const urlIdx = columns.findIndex(c => c.fieldName === "URL" || c.fieldName === "DashboardURL");
-            const imgIdx = columns.findIndex(c => c.fieldName === "PreviewURL" || c.fieldName === "PreviewImageURL");
 
             portalData = summaryData.data.map(row => ({
                 category: (catIdx !== -1 && row[catIdx]) ? (row[catIdx].formattedValue || row[catIdx].value) : '',
                 name: (dashIdx !== -1 && row[dashIdx]) ? (row[dashIdx].formattedValue || row[dashIdx].value) : '',
                 description: (descIdx !== -1 && row[descIdx]) ? (row[descIdx].formattedValue || row[descIdx].value) : '',
-                url: (urlIdx !== -1 && row[urlIdx]) ? (row[urlIdx].formattedValue || row[urlIdx].value) : '#',
-                previewUrl: (imgIdx !== -1 && row[imgIdx]) ? (row[imgIdx].formattedValue || row[imgIdx].value) : ''
+                url: (urlIdx !== -1 && row[urlIdx]) ? (row[urlIdx].formattedValue || row[urlIdx].value) : '#'
             }));
 
             portalData = portalData.filter(d => d.category && d.name);
@@ -144,53 +142,8 @@
                 <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
             `;
 
-            row.addEventListener("mouseenter", (e) => showPreview(e, dash.previewUrl));
-            row.addEventListener("mousemove", (e) => movePreview(e));
-            row.addEventListener("mouseleave", hidePreview);
-
             listContainer.appendChild(row);
         });
-    }
-
-    // === HOVER PREVIEW VIEW WITH URL CLEANING ===
-    const tooltip = document.getElementById("imagePreviewTooltip");
-    const previewImg = document.getElementById("previewImage");
-
-    function showPreview(e, url) {
-        if (!url || url === 'Null' || url === 'null' || !tooltip || !previewImg) return;
-
-        let cleanUrl = String(url).trim();
-        if (!cleanUrl || cleanUrl === '#' || cleanUrl.toLowerCase() === 'null') return;
-
-        // 1. המרת ה-URL למבנה הישיר של תמונה ב-Tableau Cloud (החלפת /#/site/ ב- /t/)
-        if (cleanUrl.includes("/#/site/")) {
-            cleanUrl = cleanUrl.replace("/#/site/", "/t/");
-        }
-
-        // 2. ווידוא סיומת .png קטנה במידת הצורך
-        if (cleanUrl.endsWith('.Png')) {
-            cleanUrl = cleanUrl.slice(0, -4) + '.png';
-        } else if (!cleanUrl.toLowerCase().endsWith('.png')) {
-            cleanUrl = cleanUrl + '.png';
-        }
-
-        previewImg.src = cleanUrl;
-        tooltip.style.display = "block";
-        movePreview(e);
-    }
-
-    function movePreview(e) {
-        if (tooltip && tooltip.style.display === "block") {
-            tooltip.style.left = (e.clientX + 15) + "px";
-            tooltip.style.top = (e.clientY + 15) + "px";
-        }
-    }
-
-    function hidePreview() {
-        if (tooltip && previewImg) {
-            tooltip.style.display = "none";
-            previewImg.src = "";
-        }
     }
 
     function setupEventListeners() {
@@ -250,8 +203,8 @@
 
     function loadMockData() {
         portalData = [
-            { category: "קטגוריה1", name: "דוח1", description: "בלה בלה", url: "https://tableau.com", previewUrl: "https://via.placeholder.com/300x180/543b93/ffffff?text=Preview+1" },
-            { category: "קטגוריה1", name: "דוח2", description: "בלה בלה", url: "https://tableau.com", previewUrl: "" }
+            { category: "קטגוריה1", name: "דוח1", description: "בלה בלה", url: "https://tableau.com" },
+            { category: "קטגוריה1", name: "דוח2", description: "בלה בלה", url: "https://tableau.com" }
         ];
         renderPortal();
     }
