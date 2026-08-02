@@ -92,7 +92,7 @@
         });
     }
 
-    function showSubView(categoryName) {
+    function showSubView(categoryName, highlightDashName = null) {
         currentCategory = categoryName;
         document.getElementById("mainView").classList.remove("active");
         document.getElementById("subView").classList.add("active");
@@ -104,7 +104,11 @@
             btn.classList.toggle("active", btn.textContent === categoryName);
         });
 
-        renderDashboardRows(categoryName);
+        // איפוס שדה החיפוש הפנימי של הקטגוריה בעת מעבר
+        const subSearch = document.getElementById("subSearchInput");
+        if (subSearch) subSearch.value = "";
+
+        renderDashboardRows(categoryName, "", highlightDashName);
     }
 
     function showMainView() {
@@ -116,7 +120,7 @@
         });
     }
 
-    function renderDashboardRows(categoryName, filterText = "") {
+    function renderDashboardRows(categoryName, filterText = "", highlightDashName = null) {
         const listContainer = document.getElementById("dashboardsList");
         if (!listContainer) return;
         
@@ -127,11 +131,12 @@
             items = items.filter(d => d.name.toLowerCase().includes(filterText.toLowerCase()));
         }
 
+        let targetRowElement = null;
+
         items.forEach(dash => {
             const row = document.createElement("div");
             row.className = "dashboard-row";
 
-            // בדיקה המונעת הצגת "Null", "undefined" או תיאור ריק
             const rawDesc = dash.description ? String(dash.description).trim() : "";
             const hasDescription = rawDesc !== "" && rawDesc.toLowerCase() !== "null" && rawDesc.toLowerCase() !== "undefined";
             const descriptionHtml = hasDescription ? `<p class="dash-desc">${rawDesc}</p>` : '';
@@ -147,8 +152,26 @@
                 <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
             `;
 
+            // בדיקה אם זו השורה שנבחרה מהחיפוש הראשי
+            if (highlightDashName && dash.name.trim().toLowerCase() === highlightDashName.trim().toLowerCase()) {
+                targetRowElement = row;
+            }
+
             listContainer.appendChild(row);
         });
+
+        // גלילה והדגשת השורה שנבחרה
+        if (targetRowElement) {
+            setTimeout(() => {
+                targetRowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetRowElement.classList.add("row-highlight");
+                
+                // הסרת ההדגשה לאחר סיום האנימציה (כדי לא להשאיר עיצוב קבוע)
+                setTimeout(() => {
+                    targetRowElement.classList.remove("row-highlight");
+                }, 2500);
+            }, 100);
+        }
     }
 
     function setupEventListeners() {
@@ -192,7 +215,8 @@
                         <small>(${m.category})</small>
                     `;
                     li.onclick = () => {
-                        showSubView(m.category);
+                        // העברת שם הדשבורד שנבחר לפונקציית ההצגה
+                        showSubView(m.category, m.name);
                         globalSearch.value = "";
                         autoList.style.display = "none";
                     };
@@ -212,7 +236,8 @@
     function loadMockData() {
         portalData = [
             { category: "תחקורים", name: "תחקור תדירות שידורים בדקה", description: "Null", url: "https://tableau.com" },
-            { category: "תחקורים", name: "תחקור שידורים", description: "null", url: "https://tableau.com" }
+            { category: "תחקורים", name: "תחקור שידורים", description: "null", url: "https://tableau.com" },
+            { category: "תחקורים", name: "דשבורד בדיקה נוסף לביצוע גלילה", description: "תיאור קצר להדגמה", url: "https://tableau.com" }
         ];
         renderPortal();
     }
