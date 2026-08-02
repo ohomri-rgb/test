@@ -104,9 +104,11 @@
             btn.classList.toggle("active", btn.textContent === categoryName);
         });
 
-        // איפוס שדה החיפוש הפנימי של הקטגוריה בעת מעבר
         const subSearch = document.getElementById("subSearchInput");
         if (subSearch) subSearch.value = "";
+
+        const subAutoList = document.getElementById("subAutocompleteList");
+        if (subAutoList) subAutoList.style.display = "none";
 
         renderDashboardRows(categoryName, "", highlightDashName);
     }
@@ -152,7 +154,6 @@
                 <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
             `;
 
-            // בדיקה אם זו השורה שנבחרה מהחיפוש הראשי
             if (highlightDashName && dash.name.trim().toLowerCase() === highlightDashName.trim().toLowerCase()) {
                 targetRowElement = row;
             }
@@ -160,13 +161,11 @@
             listContainer.appendChild(row);
         });
 
-        // גלילה והדגשת השורה שנבחרה
         if (targetRowElement) {
             setTimeout(() => {
                 targetRowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 targetRowElement.classList.add("row-highlight");
                 
-                // הסרת ההדגשה לאחר סיום האנימציה (כדי לא להשאיר עיצוב קבוע)
                 setTimeout(() => {
                     targetRowElement.classList.remove("row-highlight");
                 }, 2500);
@@ -181,15 +180,58 @@
         const btnBack = document.getElementById("btnBack");
         if (btnBack) btnBack.onclick = showMainView;
 
+        // --- חיפוש פנימי בתוך קטגוריה עם Autocomplete וסינון בלייב ---
         const subSearch = document.getElementById("subSearchInput");
-        if (subSearch) {
+        const subAutoList = document.getElementById("subAutocompleteList");
+
+        if (subSearch && subAutoList) {
             subSearch.addEventListener("input", (e) => {
+                const val = e.target.value.trim().toLowerCase();
+                
+                // סינון הרשימה המוצגת בדף
                 if (currentCategory) {
-                    renderDashboardRows(currentCategory, e.target.value);
+                    renderDashboardRows(currentCategory, val);
+                }
+
+                if (!val || !currentCategory) {
+                    subAutoList.style.display = "none";
+                    return;
+                }
+
+                // שליפת התאמות מקטגוריה נוכחית בלבד
+                const matches = portalData.filter(d => 
+                    d.category === currentCategory && 
+                    d.name.toLowerCase().includes(val)
+                );
+
+                if (matches.length === 0) {
+                    subAutoList.style.display = "none";
+                    return;
+                }
+
+                subAutoList.innerHTML = "";
+                matches.forEach(m => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<strong>${m.name}</strong>`;
+                    li.onclick = () => {
+                        subSearch.value = "";
+                        subAutoList.style.display = "none";
+                        // הצגה מלאה ואיפוס הסינון + הדגשת השורה
+                        renderDashboardRows(currentCategory, "", m.name);
+                    };
+                    subAutoList.appendChild(li);
+                });
+                subAutoList.style.display = "block";
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!subSearch.contains(e.target) && !subAutoList.contains(e.target)) {
+                    subAutoList.style.display = "none";
                 }
             });
         }
 
+        // --- חיפוש גלובלי בדף הראשי ---
         const globalSearch = document.getElementById("globalSearchInput");
         const autoList = document.getElementById("autocompleteList");
 
@@ -215,7 +257,6 @@
                         <small>(${m.category})</small>
                     `;
                     li.onclick = () => {
-                        // העברת שם הדשבורד שנבחר לפונקציית ההצגה
                         showSubView(m.category, m.name);
                         globalSearch.value = "";
                         autoList.style.display = "none";
@@ -226,7 +267,7 @@
             });
 
             document.addEventListener("click", (e) => {
-                if (!globalSearch.contains(e.target)) {
+                if (!globalSearch.contains(e.target) && !autoList.contains(e.target)) {
                     autoList.style.display = "none";
                 }
             });
