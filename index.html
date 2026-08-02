@@ -2,47 +2,73 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>פורטל דוחות</title>
-    <!-- טעינת ספריית ה-API של Tableau -->
-    <script src="tableau.extensions.1.latest.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פורטל הדוחות</title>
+    <!-- Tableau Extensions API Library -->
+    <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api@main/lib/tableau.extensions.1.latest.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="statusMessage"></div>
+    <!-- Header Navigation Bar -->
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-icon">📊</div>
+            <div class="brand-text">
+                <span class="brand-title">פורטל הדוחות</span>
+                <span class="brand-subtitle">מבוסס Tableau Server</span>
+            </div>
+        </div>
+        <nav class="category-tabs" id="categoryTabs">
+            <!-- Dynamic Category Navigation Tabs -->
+        </nav>
+    </header>
 
-    <!-- MAIN VIEW: Category Grid -->
-    <main id="main-view" class="view-section active">
+    <!-- MAIN VIEW: Categories Level -->
+    <main id="mainView" class="view-container active">
         <section class="hero-section">
             <h1>כל הדוחות של הארגון במקום אחד</h1>
-            <div class="search-container">
-                <input type="text" id="global-search" placeholder="חיפוש דשבורד בכל הקטגוריות..." autocomplete="off">
-                <div id="autocomplete-results" class="autocomplete-dropdown"></div>
+            <div class="search-box-wrapper">
+                <input type="text" id="globalSearchInput" placeholder="חיפוש דשבורד בכל הקטגוריות..." autocomplete="off">
+                <span class="search-icon">🔍</span>
+                <ul id="autocompleteList" class="autocomplete-dropdown"></ul>
             </div>
         </section>
 
-        <section class="categories-section">
+        <section class="content-section">
             <h2>קטגוריות</h2>
-            <div id="categories-grid" class="cards-grid"></div>
+            <div class="categories-grid" id="categoriesGrid">
+                <!-- Dynamic Category Cards -->
+            </div>
         </section>
     </main>
 
-    <!-- SUB VIEW: Dashboards List in Category -->
-    <main id="sub-view" class="view-section">
-        <div class="breadcrumb">
-            <button id="back-btn" class="btn-back">&rarr; חזרה לכל הקטגוריות</button>
+    <!-- SUB VIEW: Dashboard Level -->
+    <main id="subView" class="view-container">
+        <div class="sub-header-nav">
+            <button class="btn-back" id="btnBack">→ חזרה לכל הקטגוריות</button>
         </div>
         
-        <header class="category-header">
-            <h1 id="selected-category-title">קטגוריה</h1>
-        </header>
+        <div class="category-title-area">
+            <h1 id="selectedCategoryTitle">שם הקטגוריה</h1>
+            <p id="selectedCategoryDesc" class="category-desc"></p>
+        </div>
 
-        <div id="dashboards-list" class="dashboards-list"></div>
+        <div class="filter-bar">
+            <div class="search-box-wrapper search-sub">
+                <input type="text" id="subSearchInput" placeholder="חיפוש דשבורד בקטגוריה..." autocomplete="off">
+                <span class="search-icon">🔍</span>
+            </div>
+        </div>
+
+        <div class="dashboards-list" id="dashboardsList">
+            <!-- Dynamic Dashboard Rows -->
+        </div>
     </main>
 
-    <!-- Hover Preview Floating Image -->
-    <div id="preview-tooltip" class="preview-tooltip">
-        <img id="preview-img" src="" alt="תמונה מקדימה">
+    <!-- Global Image Hover Preview Tooltip -->
+    <div id="imagePreviewTooltip" class="preview-tooltip">
+        <img id="previewImage" src="" alt="Dashboard Preview">
     </div>
 
     <script src="app.js"></script>
