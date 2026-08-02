@@ -1,12 +1,15 @@
 :root {
-    --primary-teal: #006674;
-    --primary-blue: #0f172a;
+    /* הצבע הסגול שהועלה בתמונה */
+    --primary-purple: #543b93;
+    --primary-purple-hover: #473080;
+    --primary-purple-light: #f3f0fa;
+    --purple-border: #dcd4f0;
+    
     --bg-light: #f8fafc;
     --card-bg: #ffffff;
-    --border-color: #e2e8f0;
-    --text-main: #1e293b;
+    --border-color: #cbd5e1;
+    --text-main: #0f172a;
     --text-muted: #64748b;
-    --accent-blue: #0284c7;
 }
 
 * {
@@ -22,28 +25,38 @@ body {
     direction: rtl;
 }
 
-/* Top Navigation Bar */
+/* Header מתוקן - ניגוד גבוה + לוגו לחיץ */
 .top-nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
     background: #ffffff;
-    padding: 12px 32px;
-    border-bottom: 1px solid var(--border-color);
+    padding: 14px 32px;
+    border-bottom: 2px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* הבלטה תלת-ממדית לקבלת ניגוד */
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .brand {
     display: flex;
     align-items: center;
     gap: 12px;
+    cursor: pointer; /* אינדיקציה שלחיץ */
+    user-select: none;
+}
+
+.brand:hover .brand-title {
+    color: var(--primary-purple);
 }
 
 .brand-icon {
-    font-size: 24px;
-    background: var(--primary-teal);
+    font-size: 22px;
+    background: var(--primary-purple);
     color: white;
-    padding: 6px;
-    border-radius: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
 }
 
 .brand-text {
@@ -52,9 +65,10 @@ body {
 }
 
 .brand-title {
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--primary-blue);
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--text-main);
+    transition: color 0.2s;
 }
 
 .brand-subtitle {
@@ -70,18 +84,19 @@ body {
 .tab-btn {
     border: none;
     background: transparent;
-    padding: 8px 16px;
+    padding: 8px 18px;
     border-radius: 20px;
     font-size: 14px;
     color: var(--text-muted);
     cursor: pointer;
+    font-weight: 500;
     transition: all 0.2s;
 }
 
 .tab-btn.active, .tab-btn:hover {
-    background: #e0f2fe;
-    color: var(--accent-blue);
-    font-weight: 600;
+    background: var(--primary-purple-light);
+    color: var(--primary-purple);
+    font-weight: 700;
 }
 
 /* Views Management */
@@ -93,18 +108,17 @@ body {
     display: block;
 }
 
-/* Hero Section */
+/* Hero Section בצבע הסגול החדש */
 .hero-section {
-    background: linear-gradient(135deg, #005f73 0%, #0a9396 100%);
+    background: linear-gradient(135deg, var(--primary-purple) 0%, #3b276b 100%);
     color: white;
-    padding: 60px 20px;
+    padding: 55px 20px;
     text-align: center;
-    position: relative;
 }
 
 .hero-section h1 {
-    font-size: 32px;
-    margin-bottom: 24px;
+    font-size: 30px;
+    margin-bottom: 22px;
 }
 
 .search-box-wrapper {
@@ -117,10 +131,10 @@ body {
     width: 100%;
     padding: 14px 20px 14px 45px;
     border-radius: 30px;
-    border: none;
+    border: 1px solid var(--border-color);
     font-size: 15px;
     outline: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .search-icon {
@@ -129,6 +143,13 @@ body {
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
+}
+
+/* מרווח ייעודי בין שורת החיפוש לשורות הדוחות (פתרון הנגיעה בגבולות) */
+.filter-bar {
+    max-width: 1200px;
+    margin: 0 auto 28px auto; /* מרווח תחתון של 28 פיקסלים */
+    padding: 0 20px;
 }
 
 /* Autocomplete Dropdown */
@@ -151,18 +172,18 @@ body {
 .autocomplete-dropdown li {
     padding: 12px 20px;
     cursor: pointer;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-main);
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .autocomplete-dropdown li:hover {
-    background-color: #f1f5f9;
+    background-color: var(--primary-purple-light);
+    color: var(--primary-purple);
 }
 
 /* Content & Grid */
 .content-section {
     max-width: 1200px;
-    margin: 40px auto;
+    margin: 36px auto;
     padding: 0 20px;
 }
 
@@ -179,7 +200,7 @@ body {
 
 .category-card {
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--purple-border);
     border-radius: 12px;
     padding: 24px;
     display: flex;
@@ -191,7 +212,7 @@ body {
 
 .category-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 20px rgba(84, 59, 147, 0.12);
 }
 
 .card-header {
@@ -202,13 +223,14 @@ body {
 }
 
 .card-title {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
 }
 
 .card-icon {
-    font-size: 24px;
-    background: #e0f2fe;
+    font-size: 22px;
+    background: var(--primary-purple-light);
+    color: var(--primary-purple);
     padding: 10px;
     border-radius: 10px;
 }
@@ -220,9 +242,8 @@ body {
 }
 
 .card-footer-link {
-    color: var(--accent-blue);
-    font-weight: 600;
-    text-decoration: none;
+    color: var(--primary-purple);
+    font-weight: 700;
     font-size: 14px;
 }
 
@@ -236,9 +257,9 @@ body {
 .btn-back {
     background: none;
     border: none;
-    color: var(--accent-blue);
+    color: var(--primary-purple);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
 }
 
@@ -254,7 +275,7 @@ body {
     padding: 0 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .dashboard-row {
@@ -265,13 +286,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: background-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
     cursor: pointer;
-    position: relative;
 }
 
 .dashboard-row:hover {
-    background-color: #f1f5f9;
+    border-color: var(--primary-purple);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .dash-info {
@@ -282,7 +303,8 @@ body {
 
 .dash-icon {
     font-size: 20px;
-    background: #e2e8f0;
+    background: var(--primary-purple-light);
+    color: var(--primary-purple);
     padding: 8px;
     border-radius: 8px;
 }
@@ -298,17 +320,23 @@ body {
 }
 
 .btn-open {
-    padding: 8px 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
+    padding: 8px 18px;
+    border: 1px solid var(--primary-purple);
+    border-radius: 8px;
     background: white;
-    color: var(--accent-blue);
+    color: var(--primary-purple);
     text-decoration: none;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
+    transition: all 0.2s;
 }
 
-/* Image Hover Preview Tooltip */
+.btn-open:hover {
+    background: var(--primary-purple);
+    color: white;
+}
+
+/* Image Preview Tooltip */
 .preview-tooltip {
     position: fixed;
     display: none;
@@ -320,8 +348,6 @@ body {
     border-radius: 10px;
     padding: 6px;
     max-width: 320px;
-    max-height: 220px;
-    overflow: hidden;
 }
 
 .preview-tooltip img {
