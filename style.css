@@ -38,12 +38,12 @@ body {
     z-index: 100;
 }
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    user-select: none;
+/* הגבלת גודל הלוגו הראשי כדי למנוע מריחה */
+.brand-logo-img {
+    width: 36px;            /* רוחב מוגדר קבוע */
+    height: 36px;           /* גובה מוגדר קבוע */
+    object-fit: contain;    /* שומר על פרופורציות התמונה ללא עיוות */
+    border-radius: 8px;     /* עיגול פינות קל (רשות) */
 }
 
 .brand:hover .brand-title {
