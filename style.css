@@ -22,7 +22,10 @@ body {
     padding: 1rem 2rem;
     background: #fff;
     border-bottom: 1px solid var(--border-color);
+}
 
+.brand-logo-img {
+    height: 40px;
 }
 
 .hero-section {
@@ -101,7 +104,7 @@ body {
     display: block;
 }
 
-/* Dashboard Row styling */
+/* עיצוב שורות הדשבורדים - יישור מוחלט */
 .dashboards-list {
     padding: 2rem;
 }
@@ -109,27 +112,78 @@ body {
 .dashboard-row {
     background: white;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
     margin-bottom: 0.8rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative;
+    gap: 1.5rem;
 }
 
 .dashboard-row:hover {
     background-color: #f8fafc;
 }
 
+/* אזור הפרטים מימין */
+.dash-info {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    flex: 1;
+    min-width: 0;
+}
+
+/* מיקום גודל האייקון - קבוע מימין */
+.dash-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f1f5f9;
+    border-radius: 8px;
+    font-size: 1.2rem;
+}
+
+.dash-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.dash-details h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.dash-details p {
+    margin: 4px 0 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* כפתור "פתיחה" - קבוע בקצה השמאלי */
 .btn-open {
-    padding: 0.5rem 1rem;
-    background-color: #e0f2fe;
-    color: #0369a1;
-    border: none;
-    border-radius: 6px;
+    flex-shrink: 0;
+    padding: 0.6rem 1.2rem;
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
     cursor: pointer;
     text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.btn-open:hover {
+    background-color: #166534;
+    color: #ffffff;
 }
 
 /* Tooltip Preview Styling */
