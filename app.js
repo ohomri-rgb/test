@@ -182,7 +182,10 @@
                 autoList.innerHTML = "";
                 matches.forEach(m => {
                     const li = document.createElement("li");
-                    li.innerHTML = `<strong>${m.name}</strong> <small style="color:#64748b">(${m.category})</small>`;
+                    li.innerHTML = `
+                        <strong>${m.name}</strong>
+                        <small>(${m.category})</small>
+                    `;
                     li.onclick = () => {
                         showSubView(m.category);
                         globalSearch.value = "";
@@ -203,8 +206,8 @@
 
     function loadMockData() {
         portalData = [
-            { category: "קטגוריה1", name: "דוח1", description: "בלה בלה", url: "https://tableau.com" },
-            { category: "קטגוריה1", name: "דוח2", description: "בלה בלה", url: "https://tableau.com" }
+            { category: "קטגוריה1", name: "דוח1", description: "דוח דוגמה 1", url: "https://tableau.com" },
+            { category: "קטגוריה1", name: "דוח2", description: "דוח דוגמה 2", url: "https://tableau.com" }
         ];
         renderPortal();
     }
