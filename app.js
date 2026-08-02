@@ -131,12 +131,16 @@
             const row = document.createElement("div");
             row.className = "dashboard-row";
 
+            // בדיקה המונעת הצגת "Null" או מילת תיאור ריקה
+            const hasDescription = dash.description && dash.description.trim() !== "" && dash.description.toLowerCase() !== "null";
+            const descriptionHtml = hasDescription ? `<p>${dash.description}</p>` : '';
+
             row.innerHTML = `
                 <div class="dash-info">
                     <span class="dash-icon">📊</span>
                     <div class="dash-details">
                         <h4>${dash.name}</h4>
-                        <p>${dash.description}</p>
+                        ${descriptionHtml}
                     </div>
                 </div>
                 <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
@@ -206,8 +210,8 @@
 
     function loadMockData() {
         portalData = [
-            { category: "קטגוריה1", name: "דוח1", description: "דוח דוגמה 1", url: "https://tableau.com" },
-            { category: "קטגוריה1", name: "דוח2", description: "דוח דוגמה 2", url: "https://tableau.com" }
+            { category: "תחקורים", name: "תחקור תדירות שידורים בדקה", description: "Null", url: "https://tableau.com" },
+            { category: "תחקורים", name: "תחקור שידורים", description: "null", url: "https://tableau.com" }
         ];
         renderPortal();
     }
