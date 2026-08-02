@@ -2,48 +2,58 @@
     let portalData = [];
     let currentCategory = null;
 
-    // אתחול התקשורת מול Tableau API
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", function () {
+        // בדיקת זמינות Tableau Extensions API
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
-            window.tableau.extensions.initializeAsync().then(() => {
+            window.tableau.extensions.initializeAsync().then(function () {
                 fetchTableauData();
-            }).catch(err => {
+            }).catch(function (err) {
                 console.error("שגיאה בהפעלת Tableau Extension API:", err);
             });
         } else {
-            console.warn("Tableau Environment לא זוהה - טוען נתוני דמה לבדיקה");
-            loadMockData(); // מנגנון נתוני דמה לבדיקות פיתוח מקומי
+            console.warn("Tableau API לא זוהה - טוען נתוני דמה לבדיקה");
+            loadMockData();
         }
 
         setupEventListeners();
     });
 
-    // שליפת הנתונים מהגיליון הנסתר בדשבורד
+    // שליפת הנתונים מ-Sheet 1
     async function fetchTableauData() {
         try {
             const dashboard = window.tableau.extensions.dashboardContent.dashboard;
-            // שליפת הגיליון הראשון (או גיליון ייעודי בשם DataWorksheet)
-            const worksheet = dashboard.worksheets.find(w => w.name === "DataWorksheet") || dashboard.worksheets[0];
             
-            if (!worksheet) return;
+            // מציאת הגיליון שבו יושבת הטבלה (Sheet 1)
+            const worksheet = dashboard.worksheets.find(w => w.name === "Sheet 1") || dashboard.worksheets[0];
+            
+            if (!worksheet) {
+                console.error("לא נמצא גיליון נתונים בדשבורד");
+                return;
+            }
 
-            const summaryData = await worksheet.getSummaryDataAsync();[cite: 1]
+            // שליפת הנתונים המסוכמים מהגיליון
+            const summaryData = await worksheet.getSummaryDataAsync();
             const columns = summaryData.columns;
             
-            // מיפוי עמודות לפי שמות השדות בטבלה שלך
-            const catIdx = columns.findIndex(c => c.fieldName === "Category");
-            const dashIdx = columns.findIndex(c => c.fieldName === "DashboardName");
-            const descIdx = columns.findIndex(c => c.fieldName === "Description");
-            const urlIdx = columns.findIndex(c => c.fieldName === "DashboardURL");
-            const imgIdx = columns.findIndex(c => c.fieldName === "PreviewImageURL");
+            // זיהוי אינדקסים לפי שמות העמודות המדויקים מ-Sheet 1 שלך
+            const catIdx = columns.findIndex(c => c.fieldName === "קטגוריה" || c.fieldName === "Category");
+            const dashIdx = columns.findIndex(c => c.fieldName === "דשבורד" || c.fieldName === "Dashboard");
+            const descIdx = columns.findIndex(c => c.fieldName === "תיאור" || c.fieldName === "Description");
+            const urlIdx = columns.findIndex(c => c.fieldName === "URL" || c.fieldName === "DashboardURL");
+            const imgIdx = columns.findIndex(c => c.fieldName === "PreviewURL" || c.fieldName === "PreviewImageURL");
 
-            portalData = summaryData.data.map(row => ({
-                category: catIdx !== -1 ? row[catIdx].value : '',
-                name: dashIdx !== -1 ? row[dashIdx].value : '',
-                description: descIdx !== -1 ? row[descIdx].value : '',
-                url: urlIdx !== -1 ? row[urlIdx].value : '#',
-                previewUrl: imgIdx !== -1 ? row[imgIdx].value : ''
-            }));
+            portalData = summaryData.data.map(row => {
+                return {
+                    category: (catIdx !== -1 && row[catIdx]) ? row[catIdx].formattedValue || row[catIdx].value : '',
+                    name: (dashIdx !== -1 && row[dashIdx]) ? row[dashIdx].formattedValue || row[dashIdx].value : '',
+                    description: (descIdx !== -1 && row[descIdx]) ? row[descIdx].formattedValue || row[descIdx].value : '',
+                    url: (urlIdx !== -1 && row[urlIdx]) ? row[urlIdx].formattedValue || row[urlIdx].value : '#',
+                    previewUrl: (imgIdx !== -1 && row[imgIdx]) ? row[imgIdx].formattedValue || row[imgIdx].value : ''
+                };
+            });
+
+            // ניקוי שורות ריקות אם קיימות
+            portalData = portalData.filter(d => d.category && d.name);
 
             renderPortal();
         } catch (error) {
@@ -51,7 +61,7 @@
         }
     }
 
-    // רינדור ראשי של הפורטל
+    // רינדור ראשי
     function renderPortal() {
         const categories = [...new Set(portalData.map(item => item.category))].filter(Boolean);
         
@@ -59,9 +69,10 @@
         renderCategoryCards(categories);
     }
 
-    // יצירת הלשוניות ב-Header
     function renderNavTabs(categories) {
         const container = document.getElementById("categoryTabs");
+        if (!container) return;
+        
         container.innerHTML = `<button class="tab-btn active" data-cat="ALL">הכל</button>`;
 
         categories.forEach(cat => {
@@ -73,9 +84,10 @@
         });
     }
 
-    // יצירת כרטיסי הקטגוריות בדף הראשי
     function renderCategoryCards(categories) {
         const grid = document.getElementById("categoriesGrid");
+        if (!grid) return;
+        
         grid.innerHTML = "";
 
         categories.forEach(cat => {
@@ -98,7 +110,6 @@
         });
     }
 
-    // מעבר לדף המשני ברמת דשבורד
     function showSubView(categoryName) {
         currentCategory = categoryName;
         document.getElementById("mainView").classList.remove("active");
@@ -107,7 +118,6 @@
         document.getElementById("selectedCategoryTitle").textContent = categoryName;
         document.getElementById("selectedCategoryDesc").textContent = `מציג את כל הדוחות תחת קטגוריית ${categoryName}`;
 
-        // עדכון הלשוניות
         document.querySelectorAll(".tab-btn").forEach(btn => {
             btn.classList.toggle("active", btn.textContent === categoryName);
         });
@@ -115,20 +125,19 @@
         renderDashboardRows(categoryName);
     }
 
-    // חזרה לדף הראשי
     function showMainView() {
         document.getElementById("subView").classList.remove("active");
-        document.getElementById("mainView").classList.active = true;
         document.getElementById("mainView").classList.add("active");
 
         document.querySelectorAll(".tab-btn").forEach(btn => {
-            btn.classList.toggle("active", btn.dataset.cat === "ALL");
+            btn.classList.toggle("active", btn.dataset && btn.dataset.cat === "ALL");
         });
     }
 
-    // רינדור שורות הדשבורדים בדף המשני
     function renderDashboardRows(categoryName, filterText = "") {
         const listContainer = document.getElementById("dashboardsList");
+        if (!listContainer) return;
+        
         listContainer.innerHTML = "";
 
         let items = portalData.filter(d => d.category === categoryName);
@@ -151,7 +160,6 @@
                 <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
             `;
 
-            // אירועי Hover להצגת תמונת ה-Preview
             row.addEventListener("mouseenter", (e) => showPreview(e, dash.previewUrl));
             row.addEventListener("mousemove", (e) => movePreview(e));
             row.addEventListener("mouseleave", hidePreview);
@@ -160,84 +168,87 @@
         });
     }
 
-    // מנגנון Preview Image on Hover
+    // מנגנון ה-Hover Preview
     const tooltip = document.getElementById("imagePreviewTooltip");
     const previewImg = document.getElementById("previewImage");
 
     function showPreview(e, url) {
-        if (!url) return;
+        if (!url || !tooltip || !previewImg) return;
         previewImg.src = url;
         tooltip.style.display = "block";
         movePreview(e);
     }
 
     function movePreview(e) {
-        if (tooltip.style.display === "block") {
+        if (tooltip && tooltip.style.display === "block") {
             tooltip.style.left = (e.clientX + 15) + "px";
             tooltip.style.top = (e.clientY + 15) + "px";
         }
     }
 
     function hidePreview() {
-        tooltip.style.display = "none";
-        previewImg.src = "";
+        if (tooltip && previewImg) {
+            tooltip.style.display = "none";
+            previewImg.src = "";
+        }
     }
 
-    // הגדרת אירועי חיפוש וניווט
     function setupEventListeners() {
-        document.getElementById("btnBack").onclick = showMainView;
+        const btnBack = document.getElementById("btnBack");
+        if (btnBack) btnBack.onclick = showMainView;
 
-        // חיפוש בדף המשני
-        document.getElementById("subSearchInput").addEventListener("input", (e) => {
-            if (currentCategory) {
-                renderDashboardRows(currentCategory, e.target.value);
-            }
-        });
+        const subSearch = document.getElementById("subSearchInput");
+        if (subSearch) {
+            subSearch.addEventListener("input", (e) => {
+                if (currentCategory) {
+                    renderDashboardRows(currentCategory, e.target.value);
+                }
+            });
+        }
 
-        // חיפוש גלובלי עם Autocomplete בדף הראשי
         const globalSearch = document.getElementById("globalSearchInput");
         const autoList = document.getElementById("autocompleteList");
 
-        globalSearch.addEventListener("input", (e) => {
-            const val = e.target.value.trim().toLowerCase();
-            if (!val) {
-                autoList.style.display = "none";
-                return;
-            }
-
-            const matches = portalData.filter(d => d.name.toLowerCase().includes(val));
-            if (matches.length === 0) {
-                autoList.style.display = "none";
-                return;
-            }
-
-            autoList.innerHTML = "";
-            matches.forEach(m => {
-                const li = document.createElement("li");
-                li.innerHTML = `<strong>${m.name}</strong> <small style="color:#64748b">(${m.category})</small>`;
-                li.onclick = () => {
-                    showSubView(m.category);
-                    globalSearch.value = "";
+        if (globalSearch && autoList) {
+            globalSearch.addEventListener("input", (e) => {
+                const val = e.target.value.trim().toLowerCase();
+                if (!val) {
                     autoList.style.display = "none";
-                };
-                autoList.appendChild(li);
-            });
-            autoList.style.display = "block";
-        });
+                    return;
+                }
 
-        document.addEventListener("click", (e) => {
-            if (!globalSearch.contains(e.target)) {
-                autoList.style.display = "none";
-            }
-        });
+                const matches = portalData.filter(d => d.name.toLowerCase().includes(val));
+                if (matches.length === 0) {
+                    autoList.style.display = "none";
+                    return;
+                }
+
+                autoList.innerHTML = "";
+                matches.forEach(m => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<strong>${m.name}</strong> <small style="color:#64748b">(${m.category})</small>`;
+                    li.onclick = () => {
+                        showSubView(m.category);
+                        globalSearch.value = "";
+                        autoList.style.display = "none";
+                    };
+                    autoList.appendChild(li);
+                });
+                autoList.style.display = "block";
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!globalSearch.contains(e.target)) {
+                    autoList.style.display = "none";
+                }
+            });
+        }
     }
 
-    // נתוני דמה לבדיקה סביבתית מחוץ לטאבלו
     function loadMockData() {
         portalData = [
-            { category: "הנהלה", name: "פורטפוליו פרויקטים", description: "סטטוס פרויקטים אסטרטגיים, תקציב מול ביצוע", url: "#", previewUrl: "https://via.placeholder.com/300x180/006674/ffffff?text=Portfolio+Preview" },
-            { category: "הנהלה", name: "דוח בוקר יומי", description: "עדכון יומי אוטומטי של מדדי מפתח לשעה 07:00", url: "#", previewUrl: "https://via.placeholder.com/300x180/0284c7/ffffff?text=Morning+Report" },
-            { category: "כספים", name: "תזרים מזומנים", description: "מעקב הכנסות והוצאות בזמן אמת", url: "#", previewUrl: "https://via.placeholder.com/300x180/10b981/ffffff?text=Cash+Flow" }
+            { category: "הנהלה", name: "דוח שני", description: "בלה בלה", url: "HTTP", previewUrl: "" },
+            { category: "כספים", name: "רווח והפסד", description: "בלה בלה", url: "HTTP", previewUrl: "" }
         ];
         renderPortal();
     }
