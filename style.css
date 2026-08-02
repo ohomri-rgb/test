@@ -134,6 +134,8 @@ body {
     font-size: 15px;
     outline: none;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: var(--text-main);
+    background: white;
 }
 
 .search-icon {
@@ -150,13 +152,13 @@ body {
     padding: 0 20px;
 }
 
-/* Autocomplete Dropdown */
+/* Autocomplete Dropdown Custom Styling */
 .autocomplete-dropdown {
     position: absolute;
     top: 105%;
     left: 0;
     right: 0;
-    background: white;
+    background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     list-style: none;
@@ -165,16 +167,35 @@ body {
     z-index: 1000;
     display: none;
     text-align: right;
+    border: 1px solid var(--border-color);
 }
 
 .autocomplete-dropdown li {
     padding: 12px 20px;
     cursor: pointer;
     border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.15s ease;
+}
+
+.autocomplete-dropdown li strong {
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.autocomplete-dropdown li small {
+    color: #64748b;
+    font-size: 12px;
 }
 
 .autocomplete-dropdown li:hover {
     background-color: var(--primary-purple-light);
+}
+
+.autocomplete-dropdown li:hover strong {
     color: var(--primary-purple);
 }
 
