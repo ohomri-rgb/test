@@ -1,199 +1,244 @@
 (function () {
-    let rawData = [];
-    let categoriesData = {};
-    let attempts = 0;
-    const MAX_ATTEMPTS = 400;
+    let portalData = [];
+    let currentCategory = null;
 
-    // מנגנון הבדיקה והסנכרון הבטוח מהקוד העובד
-    const checkTableauLoaded = setInterval(() => {
-        attempts++;
+    // אתחול התקשורת מול Tableau API
+    document.addEventListener("DOMContentLoaded", () => {
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
-            clearInterval(checkTableauLoaded);
-            initPortalExtension();
-        } else if (attempts >= MAX_ATTEMPTS) {
-            clearInterval(checkTableauLoaded);
-            renderError("Timeout: לא ניתן לטעון את Tableau Extensions API.");
+            window.tableau.extensions.initializeAsync().then(() => {
+                fetchTableauData();
+            }).catch(err => {
+                console.error("שגיאה בהפעלת Tableau Extension API:", err);
+            });
+        } else {
+            console.warn("Tableau Environment לא זוהה - טוען נתוני דמה לבדיקה");
+            loadMockData(); // מנגנון נתוני דמה לבדיקות פיתוח מקומי
         }
-    }, 50);
 
-    async function initPortalExtension() {
+        setupEventListeners();
+    });
+
+    // שליפת הנתונים מהגיליון הנסתר בדשבורד
+    async function fetchTableauData() {
         try {
-            await window.tableau.extensions.initializeAsync();
             const dashboard = window.tableau.extensions.dashboardContent.dashboard;
+            // שליפת הגיליון הראשון (או גיליון ייעודי בשם DataWorksheet)
+            const worksheet = dashboard.worksheets.find(w => w.name === "DataWorksheet") || dashboard.worksheets[0];
+            
+            if (!worksheet) return;
 
-            // איתור הגיליון (לוקח את הגיליון הראשון או מחיפוש לפי שם)
-            let worksheet = dashboard.worksheets.find(ws => ws.name === "Data_Sheet") || dashboard.worksheets[0];
+            const summaryData = await worksheet.getSummaryDataAsync();[cite: 1]
+            const columns = summaryData.columns;
+            
+            // מיפוי עמודות לפי שמות השדות בטבלה שלך
+            const catIdx = columns.findIndex(c => c.fieldName === "Category");
+            const dashIdx = columns.findIndex(c => c.fieldName === "DashboardName");
+            const descIdx = columns.findIndex(c => c.fieldName === "Description");
+            const urlIdx = columns.findIndex(c => c.fieldName === "DashboardURL");
+            const imgIdx = columns.findIndex(c => c.fieldName === "PreviewImageURL");
 
-            if (!worksheet) {
-                renderError("לא נמצא גיליון נתונים בדשבורד.");
-                return;
-            }
+            portalData = summaryData.data.map(row => ({
+                category: catIdx !== -1 ? row[catIdx].value : '',
+                name: dashIdx !== -1 ? row[dashIdx].value : '',
+                description: descIdx !== -1 ? row[descIdx].value : '',
+                url: urlIdx !== -1 ? row[urlIdx].value : '#',
+                previewUrl: imgIdx !== -1 ? row[imgIdx].value : ''
+            }));
 
-            const summaryData = await worksheet.getSummaryDataAsync();
-            parseTableauData(summaryData);
-            setupEventListeners();
-            renderCategoriesView();
-
-        } catch (err) {
-            renderError(`שגיאה בטעינת הנתונים: ${err.message}`);
+            renderPortal();
+        } catch (error) {
+            console.error("שגיאה בשליפת הנתונים מטאבלו:", error);
         }
     }
 
-    // המרת ה-DataTable של טאבלו לאובייקטים בצורה מוגנת
-    function parseTableauData(summaryData) {
-        const columns = summaryData.columns.map(c => c.fieldName.trim());
+    // רינדור ראשי של הפורטל
+    function renderPortal() {
+        const categories = [...new Set(portalData.map(item => item.category))].filter(Boolean);
+        
+        renderNavTabs(categories);
+        renderCategoryCards(categories);
+    }
 
-        // זיהוי אינדקסים לפי שמות העמודות בטבלה
-        const idxCat = columns.findIndex(c => c.includes("קטגוריה") || c.toLowerCase().includes("category"));
-        const idxDash = columns.findIndex(c => c.includes("דשבורד") || c.toLowerCase().includes("dashboard"));
-        const idxDesc = columns.findIndex(c => c.includes("תיאור") || c.toLowerCase().includes("description"));
-        const idxUrl = columns.findIndex(c => c === "URL" || c.toLowerCase().includes("url"));
-        const idxImage = columns.findIndex(c => c.includes("תמונה") || c.toLowerCase().includes("image"));
+    // יצירת הלשוניות ב-Header
+    function renderNavTabs(categories) {
+        const container = document.getElementById("categoryTabs");
+        container.innerHTML = `<button class="tab-btn active" data-cat="ALL">הכל</button>`;
 
-        rawData = [];
-        categoriesData = {};
-
-        summaryData.data.forEach(row => {
-            const item = {
-                category: idxCat !== -1 && row[idxCat] ? row[idxCat].formattedValue || row[idxCat].value : '',
-                dashboard: idxDash !== -1 && row[idxDash] ? row[idxDash].formattedValue || row[idxDash].value : '',
-                description: idxDesc !== -1 && row[idxDesc] ? row[idxDesc].formattedValue || row[idxDesc].value : '',
-                url: idxUrl !== -1 && row[idxUrl] ? row[idxUrl].formattedValue || row[idxUrl].value : '#',
-                image: idxImage !== -1 && row[idxImage] ? row[idxImage].formattedValue || row[idxImage].value : ''
-            };
-
-            if (item.category && item.dashboard) {
-                rawData.push(item);
-                if (!categoriesData[item.category]) {
-                    categoriesData[item.category] = [];
-                }
-                categoriesData[item.category].push(item);
-            }
+        categories.forEach(cat => {
+            const btn = document.createElement("button");
+            btn.className = "tab-btn";
+            btn.textContent = cat;
+            btn.onclick = () => showSubView(cat);
+            container.appendChild(btn);
         });
     }
 
-    // הצגת קטגוריות
-    function renderCategoriesView() {
-        const grid = document.getElementById('categories-grid');
-        if (!grid) return;
-        grid.innerHTML = '';
+    // יצירת כרטיסי הקטגוריות בדף הראשי
+    function renderCategoryCards(categories) {
+        const grid = document.getElementById("categoriesGrid");
+        grid.innerHTML = "";
 
-        Object.keys(categoriesData).forEach(catName => {
-            const count = categoriesData[catName].length;
-            const card = document.createElement('div');
-            card.className = 'category-card';
+        categories.forEach(cat => {
+            const count = portalData.filter(d => d.category === cat).length;
+            const card = document.createElement("div");
+            card.className = "category-card";
+            card.onclick = () => showSubView(cat);
+
             card.innerHTML = `
-                <h3>${catName}</h3>
-                <p>${count} דשבורדים</p>
-                <span class="card-link">כניסה לקטגוריה &larr;</span>
+                <div>
+                    <div class="card-header">
+                        <span class="card-title">${cat}</span>
+                        <span class="card-icon">📁</span>
+                    </div>
+                    <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
+                </div>
+                <span class="card-footer-link">כניסה לקטגוריה ←</span>
             `;
-            card.onclick = () => openCategory(catName);
             grid.appendChild(card);
         });
     }
 
-    // הצגת רשימת דשבורדים בקטגוריה
-    function openCategory(catName) {
-        document.getElementById('main-view').classList.remove('active');
-        document.getElementById('sub-view').classList.add('active');
-        document.getElementById('selected-category-title').innerText = catName;
+    // מעבר לדף המשני ברמת דשבורד
+    function showSubView(categoryName) {
+        currentCategory = categoryName;
+        document.getElementById("mainView").classList.remove("active");
+        document.getElementById("subView").classList.add("active");
 
-        const list = document.getElementById('dashboards-list');
-        list.innerHTML = '';
+        document.getElementById("selectedCategoryTitle").textContent = categoryName;
+        document.getElementById("selectedCategoryDesc").textContent = `מציג את כל הדוחות תחת קטגוריית ${categoryName}`;
 
-        const items = categoriesData[catName] || [];
-        items.forEach(item => {
-            const row = document.createElement('div');
-            row.className = 'dashboard-row';
-            row.innerHTML = `
-                <div class="dash-info">
-                    <h4>${item.dashboard}</h4>
-                    <p>${item.description}</p>
-                </div>
-                <a href="${item.url}" target="_blank" class="btn-open">פתיחה ↗</a>
-            `;
+        // עדכון הלשוניות
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.textContent === categoryName);
+        });
 
-            // Hover Image Preview
-            if (item.image) {
-                row.addEventListener('mouseenter', (e) => showPreview(e, item.image));
-                row.addEventListener('mousemove', (e) => movePreview(e));
-                row.addEventListener('mouseleave', hidePreview);
-            }
+        renderDashboardRows(categoryName);
+    }
 
-            list.appendChild(row);
+    // חזרה לדף הראשי
+    function showMainView() {
+        document.getElementById("subView").classList.remove("active");
+        document.getElementById("mainView").classList.active = true;
+        document.getElementById("mainView").classList.add("active");
+
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.cat === "ALL");
         });
     }
 
-    // מנגנון ה-Hover לתמונה מקדימה
-    const tooltip = document.getElementById('preview-tooltip');
-    const tooltipImg = document.getElementById('preview-img');
+    // רינדור שורות הדשבורדים בדף המשני
+    function renderDashboardRows(categoryName, filterText = "") {
+        const listContainer = document.getElementById("dashboardsList");
+        listContainer.innerHTML = "";
 
-    function showPreview(e, imgSrc) {
-        if (!tooltip || !tooltipImg) return;
-        tooltipImg.src = imgSrc;
-        tooltip.style.display = 'block';
+        let items = portalData.filter(d => d.category === categoryName);
+        if (filterText) {
+            items = items.filter(d => d.name.toLowerCase().includes(filterText.toLowerCase()));
+        }
+
+        items.forEach(dash => {
+            const row = document.createElement("div");
+            row.className = "dashboard-row";
+
+            row.innerHTML = `
+                <div class="dash-info">
+                    <span class="dash-icon">📊</span>
+                    <div class="dash-details">
+                        <h4>${dash.name}</h4>
+                        <p>${dash.description}</p>
+                    </div>
+                </div>
+                <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
+            `;
+
+            // אירועי Hover להצגת תמונת ה-Preview
+            row.addEventListener("mouseenter", (e) => showPreview(e, dash.previewUrl));
+            row.addEventListener("mousemove", (e) => movePreview(e));
+            row.addEventListener("mouseleave", hidePreview);
+
+            listContainer.appendChild(row);
+        });
+    }
+
+    // מנגנון Preview Image on Hover
+    const tooltip = document.getElementById("imagePreviewTooltip");
+    const previewImg = document.getElementById("previewImage");
+
+    function showPreview(e, url) {
+        if (!url) return;
+        previewImg.src = url;
+        tooltip.style.display = "block";
         movePreview(e);
     }
 
     function movePreview(e) {
-        if (!tooltip) return;
-        tooltip.style.left = (e.clientX - 330) + 'px';
-        tooltip.style.top = (e.clientY + 15) + 'px';
+        if (tooltip.style.display === "block") {
+            tooltip.style.left = (e.clientX + 15) + "px";
+            tooltip.style.top = (e.clientY + 15) + "px";
+        }
     }
 
     function hidePreview() {
-        if (!tooltip) return;
-        tooltip.style.display = 'none';
-        tooltipImg.src = '';
+        tooltip.style.display = "none";
+        previewImg.src = "";
     }
 
-    // ניהול החיפוש וה-Autocomplete
+    // הגדרת אירועי חיפוש וניווט
     function setupEventListeners() {
-        const backBtn = document.getElementById('back-btn');
-        if (backBtn) {
-            backBtn.onclick = () => {
-                document.getElementById('sub-view').classList.remove('active');
-                document.getElementById('main-view').classList.add('active');
-            };
-        }
+        document.getElementById("btnBack").onclick = showMainView;
 
-        const globalSearch = document.getElementById('global-search');
-        const autoDropdown = document.getElementById('autocomplete-results');
+        // חיפוש בדף המשני
+        document.getElementById("subSearchInput").addEventListener("input", (e) => {
+            if (currentCategory) {
+                renderDashboardRows(currentCategory, e.target.value);
+            }
+        });
 
-        if (globalSearch && autoDropdown) {
-            globalSearch.addEventListener('input', (e) => {
-                const val = e.target.value.trim().toLowerCase();
-                autoDropdown.innerHTML = '';
+        // חיפוש גלובלי עם Autocomplete בדף הראשי
+        const globalSearch = document.getElementById("globalSearchInput");
+        const autoList = document.getElementById("autocompleteList");
 
-                if (!val) return;
+        globalSearch.addEventListener("input", (e) => {
+            const val = e.target.value.trim().toLowerCase();
+            if (!val) {
+                autoList.style.display = "none";
+                return;
+            }
 
-                const matches = rawData.filter(d =>
-                    d.dashboard.toLowerCase().includes(val) ||
-                    d.category.toLowerCase().includes(val)
-                );
+            const matches = portalData.filter(d => d.name.toLowerCase().includes(val));
+            if (matches.length === 0) {
+                autoList.style.display = "none";
+                return;
+            }
 
-                matches.forEach(match => {
-                    const el = document.createElement('div');
-                    el.className = 'autocomplete-item';
-                    el.innerHTML = `<strong>${match.dashboard}</strong> <small>(${match.category})</small>`;
-                    el.onclick = () => {
-                        openCategory(match.category);
-                        autoDropdown.innerHTML = '';
-                        globalSearch.value = '';
-                    };
-                    autoDropdown.appendChild(el);
-                });
+            autoList.innerHTML = "";
+            matches.forEach(m => {
+                const li = document.createElement("li");
+                li.innerHTML = `<strong>${m.name}</strong> <small style="color:#64748b">(${m.category})</small>`;
+                li.onclick = () => {
+                    showSubView(m.category);
+                    globalSearch.value = "";
+                    autoList.style.display = "none";
+                };
+                autoList.appendChild(li);
             });
-        }
+            autoList.style.display = "block";
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!globalSearch.contains(e.target)) {
+                autoList.style.display = "none";
+            }
+        });
     }
 
-    function renderError(msg) {
-        const container = document.getElementById("statusMessage");
-        if (!container) return;
-        container.innerHTML = `
-            <div style="direction: rtl; color: #dc2626; padding: 12px; border: 1px solid #fca5a5; background: #fef2f2; border-radius: 6px; font-size: 13px;">
-                <strong>❌ שגיאה:</strong> ${msg}
-            </div>
-        `;
+    // נתוני דמה לבדיקה סביבתית מחוץ לטאבלו
+    function loadMockData() {
+        portalData = [
+            { category: "הנהלה", name: "פורטפוליו פרויקטים", description: "סטטוס פרויקטים אסטרטגיים, תקציב מול ביצוע", url: "#", previewUrl: "https://via.placeholder.com/300x180/006674/ffffff?text=Portfolio+Preview" },
+            { category: "הנהלה", name: "דוח בוקר יומי", description: "עדכון יומי אוטומטי של מדדי מפתח לשעה 07:00", url: "#", previewUrl: "https://via.placeholder.com/300x180/0284c7/ffffff?text=Morning+Report" },
+            { category: "כספים", name: "תזרים מזומנים", description: "מעקב הכנסות והוצאות בזמן אמת", url: "#", previewUrl: "https://via.placeholder.com/300x180/10b981/ffffff?text=Cash+Flow" }
+        ];
+        renderPortal();
     }
 })();
