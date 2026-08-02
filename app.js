@@ -1,9 +1,10 @@
 (function () {
     let portalData = [];
     let currentCategory = null;
+    // Cache לתמונות שכבר נטענו כדי למנוע בקשות רשת חוזרות
+    const imageCache = new Map();
 
     document.addEventListener("DOMContentLoaded", function () {
-        // אתחול התקשורת מול Tableau Extensions API
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
             window.tableau.extensions.initializeAsync().then(function () {
                 fetchTableauData();
@@ -18,22 +19,16 @@
         setupEventListeners();
     });
 
-    // שליפת הנתונים מהגיליון בדשבורד
     async function fetchTableauData() {
         try {
             const dashboard = window.tableau.extensions.dashboardContent.dashboard;
-            // איתור הגיליון שבו מוצגת הטבלה (Sheet 1)
             const worksheet = dashboard.worksheets.find(w => w.name === "Sheet 1") || dashboard.worksheets[0];
             
-            if (!worksheet) {
-                console.error("לא נמצא גיליון נתונים בדשבורד");
-                return;
-            }
+            if (!worksheet) return;
 
             const summaryData = await worksheet.getSummaryDataAsync();
             const columns = summaryData.columns;
             
-            // זיהוי אינדקסים של העמודות לפי הכותרות ב-Tableau
             const catIdx = columns.findIndex(c => c.fieldName === "קטגוריה" || c.fieldName === "Category");
             const dashIdx = columns.findIndex(c => c.fieldName === "דשבורד" || c.fieldName === "Dashboard");
             const descIdx = columns.findIndex(c => c.fieldName === "תיאור" || c.fieldName === "Description");
@@ -48,7 +43,6 @@
                 previewUrl: (imgIdx !== -1 && row[imgIdx]) ? (row[imgIdx].formattedValue || row[imgIdx].value) : ''
             }));
 
-            // סינון שורות ריקות
             portalData = portalData.filter(d => d.category && d.name);
             renderPortal();
         } catch (error) {
@@ -56,14 +50,12 @@
         }
     }
 
-    // רינדור התקשורת והתצוגות
     function renderPortal() {
         const categories = [...new Set(portalData.map(item => item.category))].filter(Boolean);
         renderNavTabs(categories);
         renderCategoryCards(categories);
     }
 
-    // יצירת הלשוניות ב-Header (קטגוריות בלבד, ללא "הכל")
     function renderNavTabs(categories) {
         const container = document.getElementById("categoryTabs");
         if (!container) return;
@@ -79,7 +71,6 @@
         });
     }
 
-    // יצירת כרטיסי הקטגוריות בדף הראשי
     function renderCategoryCards(categories) {
         const grid = document.getElementById("categoriesGrid");
         if (!grid) return;
@@ -105,7 +96,6 @@
         });
     }
 
-    // מעבר לדף המשני ברמת דשבורד
     function showSubView(categoryName) {
         currentCategory = categoryName;
         document.getElementById("mainView").classList.remove("active");
@@ -114,7 +104,6 @@
         document.getElementById("selectedCategoryTitle").textContent = categoryName;
         document.getElementById("selectedCategoryDesc").textContent = `מציג את כל הדוחות תחת קטגוריית ${categoryName}`;
 
-        // עדכון הלשונית הפעילה ב-Header
         document.querySelectorAll(".tab-btn").forEach(btn => {
             btn.classList.toggle("active", btn.textContent === categoryName);
         });
@@ -122,7 +111,6 @@
         renderDashboardRows(categoryName);
     }
 
-    // חזרה לדף הראשי
     function showMainView() {
         document.getElementById("subView").classList.remove("active");
         document.getElementById("mainView").classList.add("active");
@@ -132,7 +120,6 @@
         });
     }
 
-    // רינדור שורות הדשבורדים בדף המשני
     function renderDashboardRows(categoryName, filterText = "") {
         const listContainer = document.getElementById("dashboardsList");
         if (!listContainer) return;
@@ -159,7 +146,6 @@
                 <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
             `;
 
-            // התליית אירועי עכבר להצגת תמונת Preview
             row.addEventListener("mouseenter", (e) => showPreview(e, dash.previewUrl));
             row.addEventListener("mousemove", (e) => movePreview(e));
             row.addEventListener("mouseleave", hidePreview);
@@ -168,33 +154,46 @@
         });
     }
 
-    // === מנגנון HOVER PREVIEW VIEW ===
+    // === מנגנון HOVER PREVIEW VIEW (פתרון בעיית CORS/Authentication) ===
     const tooltip = document.getElementById("imagePreviewTooltip");
     const previewImg = document.getElementById("previewImage");
 
-    function showPreview(e, url) {
-        if (!url || url === 'Null' || url === 'null' || !tooltip || !previewImg) {
-            return;
-        }
+    async function showPreview(e, url) {
+        if (!url || url === 'Null' || url === 'null' || !tooltip || !previewImg) return;
 
         let cleanUrl = String(url).trim();
-        if (!cleanUrl || cleanUrl === '#' || cleanUrl.toLowerCase() === 'null') {
-            return;
-        }
+        if (!cleanUrl || cleanUrl === '#' || cleanUrl.toLowerCase() === 'null') return;
 
-        // תיקון סיומת תמונה
         if (cleanUrl.endsWith('.Png')) {
             cleanUrl = cleanUrl.slice(0, -4) + '.png';
         }
 
-        // טיפול בשגיאת טעינה (אם השרת חוסם או שהנתיב שבור)
-        previewImg.onerror = function () {
-            hidePreview();
-        };
+        // 1. בדיקה אם התמונה כבר נשמרה בזיכרון המטמון
+        if (imageCache.has(cleanUrl)) {
+            previewImg.src = imageCache.get(cleanUrl);
+            tooltip.style.display = "block";
+            movePreview(e);
+            return;
+        }
 
-        previewImg.src = cleanUrl;
-        tooltip.style.display = "block";
-        movePreview(e);
+        // 2. טעינת התמונה באמצעות Fetch עם Credentials לעקיפת חסימת הדפדפן
+        try {
+            const response = await fetch(cleanUrl, { mode: 'cors', credentials: 'include' });
+            if (!response.ok) throw new Error("חסימת אבטחה או קישור לא תקין");
+
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            
+            imageCache.set(cleanUrl, objectUrl); // שמירה ב-Cache
+            previewImg.src = objectUrl;
+            tooltip.style.display = "block";
+            movePreview(e);
+        } catch (err) {
+            // ניסיון נפילה (Fallback) לטעינה ישירה למקרה שאין CORS חסום
+            previewImg.src = cleanUrl;
+            tooltip.style.display = "block";
+            movePreview(e);
+        }
     }
 
     function movePreview(e) {
@@ -207,20 +206,16 @@
     function hidePreview() {
         if (tooltip && previewImg) {
             tooltip.style.display = "none";
-            previewImg.src = "";
         }
     }
 
-    // הגדרת מאזיני אירועים לניווט וחיפוש
     function setupEventListeners() {
-        // בלחיצה על הלוגו / הטקסט ב-Header -> חזרה לדף הראשי
         const brandLogo = document.getElementById("brandLogo");
         if (brandLogo) brandLogo.onclick = showMainView;
 
         const btnBack = document.getElementById("btnBack");
         if (btnBack) btnBack.onclick = showMainView;
 
-        // חיפוש פנימי בדף קטגוריה
         const subSearch = document.getElementById("subSearchInput");
         if (subSearch) {
             subSearch.addEventListener("input", (e) => {
@@ -230,7 +225,6 @@
             });
         }
 
-        // חיפוש גלובלי עם Autocomplete בדף הראשי
         const globalSearch = document.getElementById("globalSearchInput");
         const autoList = document.getElementById("autocompleteList");
 
@@ -270,12 +264,10 @@
         }
     }
 
-    // נתוני דמה לבדיקה מקומית (מקרה שה-API אינו נטען)
     function loadMockData() {
         portalData = [
             { category: "קטגוריה1", name: "דוח1", description: "בלה בלה", url: "https://tableau.com", previewUrl: "https://via.placeholder.com/300x180/543b93/ffffff?text=Preview+1" },
-            { category: "קטגוריה1", name: "דוח2", description: "בלה בלה", url: "https://tableau.com", previewUrl: "" },
-            { category: "קטגוריה2", name: "רווח והפסד", description: "דוח כספי", url: "https://tableau.com", previewUrl: "" }
+            { category: "קטגוריה1", name: "דוח2", description: "בלה בלה", url: "https://tableau.com", previewUrl: "" }
         ];
         renderPortal();
     }
