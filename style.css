@@ -1,5 +1,4 @@
 :root {
-    /* הצבע הסגול שהועלה בתמונה */
     --primary-purple: #543b93;
     --primary-purple-hover: #473080;
     --primary-purple-light: #f3f0fa;
@@ -25,7 +24,7 @@ body {
     direction: rtl;
 }
 
-/* Header מתוקן - ניגוד גבוה + לוגו לחיץ */
+/* Header */
 .top-nav {
     display: flex;
     align-items: center;
@@ -33,7 +32,7 @@ body {
     background: #ffffff;
     padding: 14px 32px;
     border-bottom: 2px solid #e2e8f0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* הבלטה תלת-ממדית לקבלת ניגוד */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -43,7 +42,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    cursor: pointer; /* אינדיקציה שלחיץ */
+    cursor: pointer;
     user-select: none;
 }
 
@@ -108,7 +107,7 @@ body {
     display: block;
 }
 
-/* Hero Section בצבע הסגול החדש */
+/* Hero Section */
 .hero-section {
     background: linear-gradient(135deg, var(--primary-purple) 0%, #3b276b 100%);
     color: white;
@@ -145,10 +144,9 @@ body {
     color: var(--text-muted);
 }
 
-/* מרווח ייעודי בין שורת החיפוש לשורות הדוחות (פתרון הנגיעה בגבולות) */
 .filter-bar {
     max-width: 1200px;
-    margin: 0 auto 28px auto; /* מרווח תחתון של 28 פיקסלים */
+    margin: 0 auto 28px auto;
     padding: 0 20px;
 }
 
@@ -334,25 +332,4 @@ body {
 .btn-open:hover {
     background: var(--primary-purple);
     color: white;
-}
-
-/* Image Preview Tooltip */
-.preview-tooltip {
-    position: fixed;
-    display: none;
-    pointer-events: none;
-    z-index: 9999;
-    background: #ffffff;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    border-radius: 10px;
-    padding: 6px;
-    max-width: 320px;
-}
-
-.preview-tooltip img {
-    width: 100%;
-    height: auto;
-    border-radius: 6px;
-    display: block;
 }
