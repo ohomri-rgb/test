@@ -1,8 +1,6 @@
 (function () {
     let portalData = [];
     let currentCategory = null;
-    // Cache לתמונות שכבר נטענו כדי למנוע בקשות רשת חוזרות
-    const imageCache = new Map();
 
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
@@ -154,46 +152,31 @@
         });
     }
 
-    // === מנגנון HOVER PREVIEW VIEW (פתרון בעיית CORS/Authentication) ===
+    // === HOVER PREVIEW VIEW WITH URL CLEANING ===
     const tooltip = document.getElementById("imagePreviewTooltip");
     const previewImg = document.getElementById("previewImage");
 
-    async function showPreview(e, url) {
+    function showPreview(e, url) {
         if (!url || url === 'Null' || url === 'null' || !tooltip || !previewImg) return;
 
         let cleanUrl = String(url).trim();
         if (!cleanUrl || cleanUrl === '#' || cleanUrl.toLowerCase() === 'null') return;
 
+        // 1. המרת ה-URL למבנה הישיר של תמונה ב-Tableau Cloud (החלפת /#/site/ ב- /t/)
+        if (cleanUrl.includes("/#/site/")) {
+            cleanUrl = cleanUrl.replace("/#/site/", "/t/");
+        }
+
+        // 2. ווידוא סיומת .png קטנה במידת הצורך
         if (cleanUrl.endsWith('.Png')) {
             cleanUrl = cleanUrl.slice(0, -4) + '.png';
+        } else if (!cleanUrl.toLowerCase().endsWith('.png')) {
+            cleanUrl = cleanUrl + '.png';
         }
 
-        // 1. בדיקה אם התמונה כבר נשמרה בזיכרון המטמון
-        if (imageCache.has(cleanUrl)) {
-            previewImg.src = imageCache.get(cleanUrl);
-            tooltip.style.display = "block";
-            movePreview(e);
-            return;
-        }
-
-        // 2. טעינת התמונה באמצעות Fetch עם Credentials לעקיפת חסימת הדפדפן
-        try {
-            const response = await fetch(cleanUrl, { mode: 'cors', credentials: 'include' });
-            if (!response.ok) throw new Error("חסימת אבטחה או קישור לא תקין");
-
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
-            
-            imageCache.set(cleanUrl, objectUrl); // שמירה ב-Cache
-            previewImg.src = objectUrl;
-            tooltip.style.display = "block";
-            movePreview(e);
-        } catch (err) {
-            // ניסיון נפילה (Fallback) לטעינה ישירה למקרה שאין CORS חסום
-            previewImg.src = cleanUrl;
-            tooltip.style.display = "block";
-            movePreview(e);
-        }
+        previewImg.src = cleanUrl;
+        tooltip.style.display = "block";
+        movePreview(e);
     }
 
     function movePreview(e) {
@@ -206,6 +189,7 @@
     function hidePreview() {
         if (tooltip && previewImg) {
             tooltip.style.display = "none";
+            previewImg.src = "";
         }
     }
 
