@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>פורטל הדוחות</title>
-    <!-- Tableau Extensions API Library -->
     <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api@main/lib/tableau.extensions.1.latest.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,7 +11,8 @@
 
     <!-- Header Navigation Bar -->
     <header class="top-nav">
-        <div class="brand">
+        <!-- לחיצה על האזור תעביר לדף הראשי -->
+        <div class="brand" id="brandLogo" title="חזרה לדף הראשי">
             <div class="brand-icon">📊</div>
             <div class="brand-text">
                 <span class="brand-title">פורטל הדוחות</span>
@@ -20,7 +20,7 @@
             </div>
         </div>
         <nav class="category-tabs" id="categoryTabs">
-            <!-- Dynamic Category Navigation Tabs -->
+            <!-- כפתורי קטגוריות דינמיים בלבד (ללא "הכל") -->
         </nav>
     </header>
 
@@ -37,9 +37,7 @@
 
         <section class="content-section">
             <h2>קטגוריות</h2>
-            <div class="categories-grid" id="categoriesGrid">
-                <!-- Dynamic Category Cards -->
-            </div>
+            <div class="categories-grid" id="categoriesGrid"></div>
         </section>
     </main>
 
@@ -61,9 +59,7 @@
             </div>
         </div>
 
-        <div class="dashboards-list" id="dashboardsList">
-            <!-- Dynamic Dashboard Rows -->
-        </div>
+        <div class="dashboards-list" id="dashboardsList"></div>
     </main>
 
     <!-- Global Image Hover Preview Tooltip -->
