@@ -1,3 +1,45 @@
+
+שיחה עם Gemini
+התנהגות שאני רוצה לתקן במוצר, מיקום האייקון של כל שורה וכפתור "לפתיחה צריכים להיות במיקום זהה, למרות שאורך שם הדשבורד משתנה ועשוי להיות ארוך
+
+בנוסף
+
+במידה ואין תיאור לדשבורד נא לא להציג NULL אלא פשוט ללא כיתוב אלא אם כן יש תיאור טקסט
+
+
+
+תכין קובץ JS וקובץ CSS עם התיקון
+
+קובצי ה-JavaScript וה-CSS עודכנו.
+סמל של JS
+app
+ JS 
+פתוח
+סמל של CSS
+style
+ CSS 
+פתוח
+
+פירוט התיקונים שבוצעו:
+יישור קבוע של האייקונים והכפתור פתיחה (style.css):
+
+הוגדר היררכיית Flexbox ברורה על .dashboard-row ו-.dash-info:
+
+ה-dash-icon קיבל גודל ופרופורציות קבועות (width: 40px, height: 40px, flex-shrink: 0), כך שהוא נשאר תמיד מקובע בצד ימין ללא תלות באורך שמו של הדשבורד.
+
+ה-btn-open קיבל flex-shrink: 0 ו-white-space: nowrap כך שהוא תמיד נשאר מקובע בקצה השמאלי של השורה.
+
+ה-dash-details תופס את יתרת המרחב במרכז (flex: 1), ותומך בשמות דשבורד ארוכים במיוחד ללא שבירת המבנה או הזזת האלמנטים האחרים.
+
+סינון הצגת ערכי Null / תיאור ריק (app.js):
+
+עודכנה הפונקציה renderDashboardRows: הוספה בדיקה מקיפה שמבטיחה כי במידה והתיאור מכיל "Null", "null", "undefined" או מחרוזת ריקה/רווחים בלבד, אלמנט ה-<p> של התיאור לא ירונדר כלל ב-DOM (ולא יישאר רווח גובה מיותר בשורה).
+
+
+
+
+‫Gemini מבוסס על AI ויכול לטעות.
+
 :root {
     --primary-purple: #543b93;
     --primary-purple-hover: #473080;
@@ -38,12 +80,11 @@ body {
     z-index: 100;
 }
 
-/* הגבלת גודל הלוגו הראשי כדי למנוע מריחה */
 .brand-logo-img {
-    width: 36px;            /* רוחב מוגדר קבוע */
-    height: 36px;           /* גובה מוגדר קבוע */
-    object-fit: contain;    /* שומר על פרופורציות התמונה ללא עיוות */
-    border-radius: 8px;     /* עיגול פינות קל (רשות) */
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 8px;
 }
 
 .brand:hover .brand-title {
@@ -297,6 +338,7 @@ body {
     gap: 14px;
 }
 
+/* CSS ליישור קבוע של האייקונים, הכפתורים והטקסט בתוך שורה */
 .dashboard-row {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -307,6 +349,7 @@ body {
     justify-content: space-between;
     transition: border-color 0.2s, box-shadow 0.2s;
     cursor: pointer;
+    min-height: 80px;
 }
 
 .dashboard-row:hover {
@@ -314,30 +357,54 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
+/* קונטיינר המידע מימין - נמתח ותופס את שאר השטח */
 .dash-info {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex: 1;
+    min-width: 0; /* מונע גלישת טקסט במסכים קטנים */
 }
 
+/* יישור האייקון בצד ימין במיקום קבוע */
 .dash-icon {
     font-size: 20px;
     background: var(--primary-purple-light);
     color: var(--primary-purple);
     padding: 8px;
     border-radius: 8px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.dash-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
 }
 
 .dash-details h4 {
     font-size: 16px;
     color: var(--text-main);
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word; /* מבטיח שגם אורך שם ארוך במיוחד לא ישבור את המבנה */
 }
 
-.dash-details p {
+.dash-details p.dash-desc {
     font-size: 12px;
     color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.3;
 }
 
+/* יישור כפתור "פתיחה" בצד שמאל במיקום קבוע */
 .btn-open {
     padding: 8px 18px;
     border: 1px solid var(--primary-purple);
@@ -348,9 +415,14 @@ body {
     font-size: 13px;
     font-weight: 700;
     transition: all 0.2s;
+    flex-shrink: 0;
+    margin-right: 16px; /* ריווח קבוע מהטקסט */
+    white-space: nowrap;
 }
 
 .btn-open:hover {
     background: var(--primary-purple);
     color: white;
 }
+style.css
+הפריט style.css מוצג.
