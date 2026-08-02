@@ -131,9 +131,10 @@
             const row = document.createElement("div");
             row.className = "dashboard-row";
 
-            // בדיקה המונעת הצגת "Null" או מילת תיאור ריקה
-            const hasDescription = dash.description && dash.description.trim() !== "" && dash.description.toLowerCase() !== "null";
-            const descriptionHtml = hasDescription ? `<p>${dash.description}</p>` : '';
+            // בדיקה המונעת הצגת "Null", "undefined" או תיאור ריק
+            const rawDesc = dash.description ? String(dash.description).trim() : "";
+            const hasDescription = rawDesc !== "" && rawDesc.toLowerCase() !== "null" && rawDesc.toLowerCase() !== "undefined";
+            const descriptionHtml = hasDescription ? `<p class="dash-desc">${rawDesc}</p>` : '';
 
             row.innerHTML = `
                 <div class="dash-info">
