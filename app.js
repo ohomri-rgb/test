@@ -2,16 +2,6 @@
     let portalData = [];
     let currentCategory = null;
 
-    const categoryIcons = {
-    "קטגוריה1": "👔",
-    "קטגוריה2": "📦",
-    "קטגוריה3": "🛠️",
-    "קטגוריה4": "📡",
-    "קטגוריה5": "🔌",
-    "קטגוריה6": "🤝",
-    "קטגוריה7": "👥"
-};
-
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
             window.tableau.extensions.initializeAsync().then(function () {
@@ -42,6 +32,16 @@
             const descIdx = columns.findIndex(c => c.fieldName === "תיאור" || c.fieldName === "Description");
             const urlIdx = columns.findIndex(c => c.fieldName === "URL" || c.fieldName === "DashboardURL");
             
+const categoryIcons = {
+    "הנהלה": "👔",
+    "מוצרים": "📦",
+    "שירות ותמיכת תוכנה": "🛠️",
+    "תקשורת": "📡",
+    "ממשק צד ג'": "🔌",
+    "ממשל ושותפים": "🤝",
+    "דוחות משתמשים": "👥",
+    "דוחות ATM": "🏧"
+};
 
             portalData = summaryData.data.map(row => ({
                 category: (catIdx !== -1 && row[catIdx]) ? (row[catIdx].formattedValue || row[catIdx].value) : '',
@@ -84,30 +84,28 @@ function renderNavTabs(categories) {
 }
 
     function renderCategoryCards(categories) {
-    const grid = document.getElementById("categoriesGrid");
-    if (!grid) return;
-    grid.innerHTML = "";
+        const grid = document.getElementById("categoriesGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
 
-    categories.forEach(cat => {
-        const count = portalData.filter(d => d.category === cat).length;
-        const icon = categoryIcons[cat] || "📁";
-        const card = document.createElement("div");
-        card.className = "category-card";
-        card.onclick = () => showSubView(cat);
+        categories.forEach(cat => {
+            const count = portalData.filter(d => d.category === cat).length;
+            const card = document.createElement("div");
+            card.className = "category-card";
+            card.onclick = () => showSubView(cat);
 
-        card.innerHTML = `
-            <div>
-                <div class="card-header">
-                    <span class="card-title">${cat}</span>
-                    <span class="card-icon">${icon}</span>
+            card.innerHTML = `
+                <div>
+                    <div class="card-header">
+                        <span class="card-title">${cat}</span>
+                        <span class="card-icon">📁</span>
+                    </div>
+                    <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
                 </div>
-                <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
-            </div>
-            <span class="card-footer-link">כניסה לקטגוריה ←</span>
-        `;
-        grid.appendChild(card);
-    });
-}
+                <span class="card-footer-link">כניסה לקטגוריה ←</span>
+            `;
+            grid.appendChild(card);
+        });
     }
 
     function showSubView(categoryName, highlightDashName = null) {
