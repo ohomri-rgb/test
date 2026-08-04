@@ -2,6 +2,17 @@
     let portalData = [];
     let currentCategory = null;
 
+    const categoryIcons = {
+    "הנהלה": "👔",
+    "מוצרים": "📦",
+    "שירות ותמיכת תוכנה": "🛠️",
+    "תקשורת": "📡",
+    "ממשק צד ג'": "🔌",
+    "ממשל ושותפים": "🤝",
+    "דוחות משתמשים": "👥",
+    "דוחות ATM": "🏧"
+};
+
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
             window.tableau.extensions.initializeAsync().then(function () {
@@ -32,16 +43,6 @@
             const descIdx = columns.findIndex(c => c.fieldName === "תיאור" || c.fieldName === "Description");
             const urlIdx = columns.findIndex(c => c.fieldName === "URL" || c.fieldName === "DashboardURL");
             
-const categoryIcons = {
-    "הנהלה": "👔",
-    "מוצרים": "📦",
-    "שירות ותמיכת תוכנה": "🛠️",
-    "תקשורת": "📡",
-    "ממשק צד ג'": "🔌",
-    "ממשל ושותפים": "🤝",
-    "דוחות משתמשים": "👥",
-    "דוחות ATM": "🏧"
-};
 
             portalData = summaryData.data.map(row => ({
                 category: (catIdx !== -1 && row[catIdx]) ? (row[catIdx].formattedValue || row[catIdx].value) : '',
