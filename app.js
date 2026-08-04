@@ -31,9 +31,21 @@
             const dashIdx = columns.findIndex(c => c.fieldName === "דשבורד" || c.fieldName === "Dashboard");
             const descIdx = columns.findIndex(c => c.fieldName === "תיאור" || c.fieldName === "Description");
             const urlIdx = columns.findIndex(c => c.fieldName === "URL" || c.fieldName === "DashboardURL");
+            
+const categoryIcons = {
+    "הנהלה": "👔",
+    "מוצרים": "📦",
+    "שירות ותמיכת תוכנה": "🛠️",
+    "תקשורת": "📡",
+    "ממשק צד ג'": "🔌",
+    "ממשל ושותפים": "🤝",
+    "דוחות משתמשים": "👥",
+    "דוחות ATM": "🏧"
+};
 
             portalData = summaryData.data.map(row => ({
                 category: (catIdx !== -1 && row[catIdx]) ? (row[catIdx].formattedValue || row[catIdx].value) : '',
+                icon: categoryIcons[(catIdx !== -1 && row[catIdx]) ? (row[catIdx].formattedValue || row[catIdx].value) : ''] || "📁",
                 name: (dashIdx !== -1 && row[dashIdx]) ? (row[dashIdx].formattedValue || row[dashIdx].value) : '',
                 description: (descIdx !== -1 && row[descIdx]) ? (row[descIdx].formattedValue || row[descIdx].value) : '',
                 url: (urlIdx !== -1 && row[urlIdx]) ? (row[urlIdx].formattedValue || row[urlIdx].value) : '#'
@@ -46,26 +58,30 @@
         }
     }
 
-    function renderPortal() {
-        const categories = [...new Set(portalData.map(item => item.category))].filter(Boolean);
-        renderNavTabs(categories);
-        renderCategoryCards(categories);
-    }
+function renderPortal() {
+    const categories = [...new Set(portalData.map(item => item.category))].filter(Boolean);
+    renderNavTabs(categories);
+    renderCategoryCards(categories);
+}
 
-    function renderNavTabs(categories) {
-        const container = document.getElementById("categoryTabs");
-        if (!container) return;
+function renderNavTabs(categories) {
+    const container = document.getElementById("categoryTabs");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    categories.forEach(cat => {
+        const btn = document.createElement("button");
+        btn.className = "tab-btn";
         
-        container.innerHTML = ""; 
-
-        categories.forEach(cat => {
-            const btn = document.createElement("button");
-            btn.className = "tab-btn";
-            btn.textContent = cat;
-            btn.onclick = () => showSubView(cat);
-            container.appendChild(btn);
-        });
-    }
+        // שליפת האייקון או אייקון ברירת מחדל
+        const icon = categoryIcons[cat] || "📁";
+        btn.innerHTML = `${icon} ${cat}`;
+        
+        btn.onclick = () => showSubView(cat);
+        container.appendChild(btn);
+});
+}
 
     function renderCategoryCards(categories) {
         const grid = document.getElementById("categoriesGrid");
