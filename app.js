@@ -84,28 +84,30 @@ function renderNavTabs(categories) {
 }
 
     function renderCategoryCards(categories) {
-        const grid = document.getElementById("categoriesGrid");
-        if (!grid) return;
-        grid.innerHTML = "";
+    const grid = document.getElementById("categoriesGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
 
-        categories.forEach(cat => {
-            const count = portalData.filter(d => d.category === cat).length;
-            const card = document.createElement("div");
-            card.className = "category-card";
-            card.onclick = () => showSubView(cat);
+    categories.forEach(cat => {
+        const count = portalData.filter(d => d.category === cat).length;
+        const icon = categoryIcons[cat] || "📁";
+        const card = document.createElement("div");
+        card.className = "category-card";
+        card.onclick = () => showSubView(cat);
 
-            card.innerHTML = `
-                <div>
-                    <div class="card-header">
-                        <span class="card-title">${cat}</span>
-                        <span class="card-icon">📁</span>
-                    </div>
-                    <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
+        card.innerHTML = `
+            <div>
+                <div class="card-header">
+                    <span class="card-title">${cat}</span>
+                    <span class="card-icon">${icon}</span>
                 </div>
-                <span class="card-footer-link">כניסה לקטגוריה ←</span>
-            `;
-            grid.appendChild(card);
-        });
+                <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
+            </div>
+            <span class="card-footer-link">כניסה לקטגוריה ←</span>
+        `;
+        grid.appendChild(card);
+    });
+}
     }
 
     function showSubView(categoryName, highlightDashName = null) {
