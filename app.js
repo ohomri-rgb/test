@@ -1,7 +1,18 @@
 (function () {
     let portalData = [];
     let currentCategory = null;
-
+    
+// מיפוי שמות הקבצים (לפי הקבצים בתמונה)
+const categoryIconFiles = {
+    "קטגוריה1": "briefcase-business.png",
+    "קטגוריה2": "package.png",
+    "קטגוריה3": "headset.png", // או headphones.png
+    "קטגוריה4": "radio.png",
+    "קטגוריה5'": "plug.png",
+    "קטגוריה6": "handshake.png",
+    "קטגוריה7": "users.png",
+    "קטגוריה8": "credit-card.png"
+};
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
             window.tableau.extensions.initializeAsync().then(function () {
