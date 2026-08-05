@@ -137,6 +137,18 @@ body {
     background: white;
 }
 
+/* אייקון זכוכית מגדלת בשורות החיפוש */
+.search-icon-img {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
 .search-icon {
     position: absolute;
     left: 18px;
@@ -264,7 +276,6 @@ body {
     display: inline-block;
 }
 
-
 .card-desc {
     color: var(--text-muted);
     font-size: 13px;
@@ -348,6 +359,18 @@ body {
     height: 40px;
 }
 
+/* אייקון דשבורד בשורות הקטגוריה */
+.dash-icon-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    background: var(--primary-purple-light);
+    padding: 9px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
 .dash-details {
     display: flex;
     flex-direction: column;
@@ -391,7 +414,7 @@ body {
     color: white;
 }
 
-/* אפקט הדגשה (Highlight) לשורה שנבחרה ממנוע החיפוש */
+/* אפקט הדגשה לשורה שנבחרה ממנוע החיפוש */
 .row-highlight {
     animation: highlightPulse 2.2s ease-in-out forwards;
 }
