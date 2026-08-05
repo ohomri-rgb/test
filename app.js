@@ -4,14 +4,14 @@
 
     // מיפוי שמות הקבצים לפי קטגוריות
     const categoryIconFiles = {
-        "הנהלה": "briefcase-business.png",
-        "מוצרים": "package.png",
-        "שירות ותמיכת תוכנה": "headset.png",
-        "תקשורת": "radio.png",
-        "ממשק צד ג'": "plug.png",
-        "ממשל ושותפים": "handshake.png",
-        "דוחות משתמשים": "users.png",
-        "דוחות ATM": "credit-card.png"
+"קטגוריה1": "briefcase-business.png",
+    "קטגוריה2": "package.png",
+    "קטגוריה3": "headset.png",
+    "קטגוריה4": "radio.png",
+    "קטגוריה5": "plug.png",
+    "קטגוריה6": "handshake.png",
+    "קטגוריה7": "users.png",
+    "קטגוריה8": "credit-card.png"
     };
 
     document.addEventListener("DOMContentLoaded", function () {
