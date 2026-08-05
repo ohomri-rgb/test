@@ -2,16 +2,26 @@
     let portalData = [];
     let currentCategory = null;
 
-    // מיפוי שמות הקבצים לפי קטגוריות
+    // מיפוי שמות הקבצים לפי שמות הקטגוריות המדויקים
     const categoryIconFiles = {
-"קטגוריה1": "briefcase-business.png",
-    "קטגוריה2": "package.png",
-    "קטגוריה3": "headset.png",
-    "קטגוריה4": "radio.png",
-    "קטגוריה5": "plug.png",
-    "קטגוריה6": "handshake.png",
-    "קטגוריה7": "users.png",
-    "קטגוריה8": "credit-card.png"
+        "הנהלה": "briefcase-business.png",
+        "מוצרים": "package.png",
+        "שירות ותמיכת תוכנה": "headset.png",
+        "תקשורת": "radio.png",
+        "ממשק צד ג'": "plug.png",
+        "ממשל ושותפים": "handshake.png",
+        "דוחות משתמשים": "users.png",
+        "דוחות ATM": "credit-card.png",
+        
+        // התאמה למקרה של שמות זמניים (כמו בטאבלו):
+        "קטגוריה1": "briefcase-business.png",
+        "קטגוריה2": "package.png",
+        "קטגוריה3": "headset.png",
+        "קטגוריה4": "radio.png",
+        "קטגוריה5": "plug.png",
+        "קטגוריה6": "handshake.png",
+        "קטגוריה7": "users.png",
+        "קטגוריה8": "credit-card.png"
     };
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -91,10 +101,9 @@
             card.className = "category-card";
             card.onclick = () => showSubView(cat);
 
-            // בניית אלמנט תמונה עם מנגנון Fallback נקי
+            // בנית אייקון תמונה לכרטיסייה בחלק התחתון בלבד עם Fallback לאמוג'י 📁
             let iconHtml = `<span class="card-icon">📁</span>`;
             if (fileName) {
-                // משתמשים ב-addEventListener נקי לטיפול בשגיאות טעינה
                 iconHtml = `<img src="./${fileName}" alt="${cat}" class="card-icon-img" onerror="this.onerror=null; this.replaceWith(Object.assign(document.createElement('span'), {className: 'card-icon', textContent: '📁'}));">`;
             }
 
@@ -163,9 +172,12 @@
             const hasDescription = rawDesc !== "" && rawDesc.toLowerCase() !== "null" && rawDesc.toLowerCase() !== "undefined";
             const descriptionHtml = hasDescription ? `<p class="dash-desc">${rawDesc}</p>` : '';
 
+            // אייקון דשבורד PNG עם Fallback לאמוג'י 📊
+            const dashIconHtml = `<img src="./layout-dashboard.png" alt="דשבורד" class="dash-icon-img" onerror="this.onerror=null; this.replaceWith(Object.assign(document.createElement('span'), {className: 'dash-icon', textContent: '📊'}));">`;
+
             row.innerHTML = `
                 <div class="dash-info">
-                    <span class="dash-icon">📊</span>
+                    ${dashIconHtml}
                     <div class="dash-details">
                         <h4>${dash.name}</h4>
                         ${descriptionHtml}
