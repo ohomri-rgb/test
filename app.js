@@ -1,18 +1,19 @@
 (function () {
     let portalData = [];
     let currentCategory = null;
-    
-// מיפוי שמות הקבצים (לפי הקבצים בתמונה)
-const categoryIconFiles = {
-    "קטגוריה1": "briefcase-business.png",
-    "קטגוריה2": "package.png",
-    "קטגוריה3": "headset.png", // או headphones.png
-    "קטגוריה4": "radio.png",
-    "קטגוריה5'": "plug.png",
-    "קטגוריה6": "handshake.png",
-    "קטגוריה7": "users.png",
-    "קטגוריה8": "credit-card.png"
-};
+
+    // מיפוי שמות הקבצים לפי קטגוריות
+    const categoryIconFiles = {
+        "הנהלה": "briefcase-business.png",
+        "מוצרים": "package.png",
+        "שירות ותמיכת תוכנה": "headset.png",
+        "תקשורת": "radio.png",
+        "ממשק צד ג'": "plug.png",
+        "ממשל ושותפים": "handshake.png",
+        "דוחות משתמשים": "users.png",
+        "דוחות ATM": "credit-card.png"
+    };
+
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
             window.tableau.extensions.initializeAsync().then(function () {
@@ -78,37 +79,37 @@ const categoryIconFiles = {
         });
     }
 
-function renderCategoryCards(categories) {
-    const grid = document.getElementById("categoriesGrid");
-    if (!grid) return;
-    grid.innerHTML = "";
+    function renderCategoryCards(categories) {
+        const grid = document.getElementById("categoriesGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
 
-    categories.forEach(cat => {
-        const count = portalData.filter(d => d.category === cat).length;
-        const fileName = categoryIconFiles[cat];
-        const card = document.createElement("div");
-        card.className = "category-card";
-        card.onclick = () => showSubView(cat);
+        categories.forEach(cat => {
+            const count = portalData.filter(d => d.category === cat).length;
+            const fileName = categoryIconFiles[cat];
+            const card = document.createElement("div");
+            card.className = "category-card";
+            card.onclick = () => showSubView(cat);
 
-        // ביוצר אלמנט תמונה עם Fallback לאמוג'י במידה והטעינה נכשלה
-        const iconHtml = fileName 
-            ? `<img src="./icons/${fileName}" alt="${cat}" class="card-icon-img" onerror="this.onerror=null; this.outerHTML='<span class=\\'card-icon\\'>📁</span>';">`
-            : `<span class="card-icon">📁</span>`;
+            // בניית אלמנט תמונה עם מנגנון Fallback נקי
+            let iconHtml = `<span class="card-icon">📁</span>`;
+            if (fileName) {
+                // משתמשים ב-addEventListener נקי לטיפול בשגיאות טעינה
+                iconHtml = `<img src="./${fileName}" alt="${cat}" class="card-icon-img" onerror="this.onerror=null; this.replaceWith(Object.assign(document.createElement('span'), {className: 'card-icon', textContent: '📁'}));">`;
+            }
 
-        card.innerHTML = `
-            <div>
-                <div class="card-header">
-                    <span class="card-title">${cat}</span>
-                    ${iconHtml}
+            card.innerHTML = `
+                <div>
+                    <div class="card-header">
+                        <span class="card-title">${cat}</span>
+                        ${iconHtml}
+                    </div>
+                    <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
                 </div>
-                <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
-            </div>
-            <span class="card-footer-link">כניסה לקטגוריה ←</span>
-        `;
-        grid.appendChild(card);
-    });
-}
-   
+                <span class="card-footer-link">כניסה לקטגוריה ←</span>
+            `;
+            grid.appendChild(card);
+        });
     }
 
     function showSubView(categoryName, highlightDashName = null) {
@@ -199,7 +200,7 @@ function renderCategoryCards(categories) {
         const btnBack = document.getElementById("btnBack");
         if (btnBack) btnBack.onclick = showMainView;
 
-        // --- חיפוש פנימי בתוך קטגוריה עם Autocomplete וסינון בלייב ---
+        // --- חיפוש פנימי בתוך קטגוריה ---
         const subSearch = document.getElementById("subSearchInput");
         const subAutoList = document.getElementById("subAutocompleteList");
 
@@ -207,7 +208,6 @@ function renderCategoryCards(categories) {
             subSearch.addEventListener("input", (e) => {
                 const val = e.target.value.trim().toLowerCase();
                 
-                // סינון הרשימה המוצגת בדף
                 if (currentCategory) {
                     renderDashboardRows(currentCategory, val);
                 }
@@ -217,7 +217,6 @@ function renderCategoryCards(categories) {
                     return;
                 }
 
-                // שליפת התאמות מקטגוריה נוכחית בלבד
                 const matches = portalData.filter(d => 
                     d.category === currentCategory && 
                     d.name.toLowerCase().includes(val)
@@ -235,7 +234,6 @@ function renderCategoryCards(categories) {
                     li.onclick = () => {
                         subSearch.value = "";
                         subAutoList.style.display = "none";
-                        // הצגה מלאה ואיפוס הסינון + הדגשת השורה
                         renderDashboardRows(currentCategory, "", m.name);
                     };
                     subAutoList.appendChild(li);
@@ -295,9 +293,9 @@ function renderCategoryCards(categories) {
 
     function loadMockData() {
         portalData = [
-            { category: "תחקורים", name: "תחקור תדירות שידורים בדקה", description: "Null", url: "https://tableau.com" },
-            { category: "תחקורים", name: "תחקור שידורים", description: "null", url: "https://tableau.com" },
-            { category: "תחקורים", name: "דשבורד בדיקה נוסף לביצוע גלילה", description: "תיאור קצר להדגמה", url: "https://tableau.com" }
+            { category: "הנהלה", name: "דוח מנהלים ראשי", description: "נתונים מרכזיים", url: "https://tableau.com" },
+            { category: "מוצרים", name: "ניתוח מוצרים", description: "מכירות לפי מוצר", url: "https://tableau.com" },
+            { category: "תקשורת", name: "ניתוח שידורים", description: "עומסי תקשורת", url: "https://tableau.com" }
         ];
         renderPortal();
     }
