@@ -78,29 +78,37 @@ const categoryIconFiles = {
         });
     }
 
-    function renderCategoryCards(categories) {
-        const grid = document.getElementById("categoriesGrid");
-        if (!grid) return;
-        grid.innerHTML = "";
+function renderCategoryCards(categories) {
+    const grid = document.getElementById("categoriesGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
 
-        categories.forEach(cat => {
-            const count = portalData.filter(d => d.category === cat).length;
-            const card = document.createElement("div");
-            card.className = "category-card";
-            card.onclick = () => showSubView(cat);
+    categories.forEach(cat => {
+        const count = portalData.filter(d => d.category === cat).length;
+        const fileName = categoryIconFiles[cat];
+        const card = document.createElement("div");
+        card.className = "category-card";
+        card.onclick = () => showSubView(cat);
 
-            card.innerHTML = `
-                <div>
-                    <div class="card-header">
-                        <span class="card-title">${cat}</span>
-                        <span class="card-icon">📁</span>
-                    </div>
-                    <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
+        // ביוצר אלמנט תמונה עם Fallback לאמוג'י במידה והטעינה נכשלה
+        const iconHtml = fileName 
+            ? `<img src="./icons/${fileName}" alt="${cat}" class="card-icon-img" onerror="this.onerror=null; this.outerHTML='<span class=\\'card-icon\\'>📁</span>';">`
+            : `<span class="card-icon">📁</span>`;
+
+        card.innerHTML = `
+            <div>
+                <div class="card-header">
+                    <span class="card-title">${cat}</span>
+                    ${iconHtml}
                 </div>
-                <span class="card-footer-link">כניסה לקטגוריה ←</span>
-            `;
-            grid.appendChild(card);
-        });
+                <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
+            </div>
+            <span class="card-footer-link">כניסה לקטגוריה ←</span>
+        `;
+        grid.appendChild(card);
+    });
+}
+   
     }
 
     function showSubView(categoryName, highlightDashName = null) {
