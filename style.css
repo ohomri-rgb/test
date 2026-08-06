@@ -74,7 +74,7 @@ body {
 .brand-title {
     font-family: "Segoe UI", Tahoma, Geneva, Arial, sans-serif !important;
     font-weight: 800 !important;
-    font-size: 11px !important;
+    font-size: 14px !important;
     color: var(--text-main);
     transition: color 0.2s;
     letter-spacing: -0.3px;
