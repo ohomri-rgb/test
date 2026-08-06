@@ -13,7 +13,7 @@
         "דוחות משתמשים": "users.png",
         "דוחות ATM": "credit-card.png",
         
-        // התאמה למקרה של שמות זמניים (כמו בטאבלו):
+        // התאמה למקרה של שמות זמניים:
         "קטגוריה1": "briefcase-business.png",
         "קטגוריה2": "package.png",
         "קטגוריה3": "headset.png",
@@ -23,6 +23,27 @@
         "קטגוריה7": "users.png",
         "קטגוריה8": "credit-card.png"
     };
+
+    /**
+     * פונקציית עזר לאימות כתובות URL
+     * מונעת הרצת javascript: או הפניות לא מורשות
+     */
+    function sanitizeUrl(urlString) {
+        if (!urlString) return '#';
+        const trimmed = urlString.trim();
+        try {
+            const parsed = new URL(trimmed, window.location.origin);
+            if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                return trimmed;
+            }
+        } catch (e) {
+            // במידה ומדובר בנתיב יחסי תקין
+            if (trimmed.startsWith('/') || trimmed.startsWith('./')) {
+                return trimmed;
+            }
+        }
+        return '#';
+    }
 
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
@@ -55,10 +76,10 @@
             const urlIdx = columns.findIndex(c => c.fieldName === "URL" || c.fieldName === "DashboardURL");
 
             portalData = summaryData.data.map(row => ({
-                category: (catIdx !== -1 && row[catIdx]) ? (row[catIdx].formattedValue || row[catIdx].value) : '',
-                name: (dashIdx !== -1 && row[dashIdx]) ? (row[dashIdx].formattedValue || row[dashIdx].value) : '',
-                description: (descIdx !== -1 && row[descIdx]) ? (row[descIdx].formattedValue || row[descIdx].value) : '',
-                url: (urlIdx !== -1 && row[urlIdx]) ? (row[urlIdx].formattedValue || row[urlIdx].value) : '#'
+                category: (catIdx !== -1 && row[catIdx]) ? String(row[catIdx].formattedValue || row[catIdx].value || '') : '',
+                name: (dashIdx !== -1 && row[dashIdx]) ? String(row[dashIdx].formattedValue || row[dashIdx].value || '') : '',
+                description: (descIdx !== -1 && row[descIdx]) ? String(row[descIdx].formattedValue || row[descIdx].value || '') : '',
+                url: (urlIdx !== -1 && row[urlIdx]) ? sanitizeUrl(row[urlIdx].formattedValue || row[urlIdx].value) : '#'
             }));
 
             portalData = portalData.filter(d => d.category && d.name);
@@ -83,7 +104,7 @@
         categories.forEach(cat => {
             const btn = document.createElement("button");
             btn.className = "tab-btn";
-            btn.textContent = cat;
+            btn.textContent = cat; // שימוש ב-textContent למניעת XSS
             btn.onclick = () => showSubView(cat);
             container.appendChild(btn);
         });
@@ -101,22 +122,51 @@
             card.className = "category-card";
             card.onclick = () => showSubView(cat);
 
-            // בנית אייקון תמונה לכרטיסייה בחלק התחתון בלבד עם Fallback לאמוג'י 📁
-            let iconHtml = `<span class="card-icon">📁</span>`;
+            // יצירת חלק עליון
+            const topDiv = document.createElement("div");
+            const headerDiv = document.createElement("div");
+            headerDiv.className = "card-header";
+
+            const titleSpan = document.createElement("span");
+            titleSpan.className = "card-title";
+            titleSpan.textContent = cat;
+
+            headerDiv.appendChild(titleSpan);
+
             if (fileName) {
-                iconHtml = `<img src="./${fileName}" alt="${cat}" class="card-icon-img" onerror="this.onerror=null; this.replaceWith(Object.assign(document.createElement('span'), {className: 'card-icon', textContent: '📁'}));">`;
+                const img = document.createElement("img");
+                img.src = `./${fileName}`;
+                img.alt = cat;
+                img.className = "card-icon-img";
+                img.onerror = function() {
+                    this.onerror = null;
+                    const span = document.createElement("span");
+                    span.className = "card-icon";
+                    span.textContent = "📁";
+                    this.replaceWith(span);
+                };
+                headerDiv.appendChild(img);
+            } else {
+                const iconSpan = document.createElement("span");
+                iconSpan.className = "card-icon";
+                iconSpan.textContent = "📁";
+                headerDiv.appendChild(iconSpan);
             }
 
-            card.innerHTML = `
-                <div>
-                    <div class="card-header">
-                        <span class="card-title">${cat}</span>
-                        ${iconHtml}
-                    </div>
-                    <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
-                </div>
-                <span class="card-footer-link">כניסה לקטגוריה ←</span>
-            `;
+            const descDiv = document.createElement("div");
+            descDiv.className = "card-desc";
+            descDiv.textContent = `${count} דוחות זמינים בקטגוריה זו`;
+
+            topDiv.appendChild(headerDiv);
+            topDiv.appendChild(descDiv);
+
+            const footerSpan = document.createElement("span");
+            footerSpan.className = "card-footer-link";
+            footerSpan.textContent = "כניסה לקטגוריה ←";
+
+            card.appendChild(topDiv);
+            card.appendChild(footerSpan);
+
             grid.appendChild(card);
         });
     }
@@ -168,23 +218,52 @@
             const row = document.createElement("div");
             row.className = "dashboard-row";
 
-            const rawDesc = dash.description ? String(dash.description).trim() : "";
+            const rawDesc = dash.description ? dash.description.trim() : "";
             const hasDescription = rawDesc !== "" && rawDesc.toLowerCase() !== "null" && rawDesc.toLowerCase() !== "undefined";
-            const descriptionHtml = hasDescription ? `<p class="dash-desc">${rawDesc}</p>` : '';
 
-            // אייקון דשבורד PNG עם Fallback לאמוג'י 📊
-            const dashIconHtml = `<img src="./layout-dashboard.png" alt="דשבורד" class="dash-icon-img" onerror="this.onerror=null; this.replaceWith(Object.assign(document.createElement('span'), {className: 'dash-icon', textContent: '📊'}));">`;
+            // בניית מבנה ה-DOM בבטחה
+            const dashInfo = document.createElement("div");
+            dashInfo.className = "dash-info";
 
-            row.innerHTML = `
-                <div class="dash-info">
-                    ${dashIconHtml}
-                    <div class="dash-details">
-                        <h4>${dash.name}</h4>
-                        ${descriptionHtml}
-                    </div>
-                </div>
-                <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
-            `;
+            const dashImg = document.createElement("img");
+            dashImg.src = "./layout-dashboard.png";
+            dashImg.alt = "דשבורד";
+            dashImg.className = "dash-icon-img";
+            dashImg.onerror = function() {
+                this.onerror = null;
+                const span = document.createElement("span");
+                span.className = "dash-icon";
+                span.textContent = "📊";
+                this.replaceWith(span);
+            };
+
+            const dashDetails = document.createElement("div");
+            dashDetails.className = "dash-details";
+
+            const h4 = document.createElement("h4");
+            h4.textContent = dash.name; // בטוח מפני XSS
+            dashDetails.appendChild(h4);
+
+            if (hasDescription) {
+                const p = document.createElement("p");
+                p.className = "dash-desc";
+                p.textContent = rawDesc; // בטוח מפני XSS
+                dashDetails.appendChild(p);
+            }
+
+            dashInfo.appendChild(dashImg);
+            dashInfo.appendChild(dashDetails);
+
+            // כפתור פתיחה עם הגנה מפני Reverse Tabnabbing ו-XSS
+            const openLink = document.createElement("a");
+            openLink.href = sanitizeUrl(dash.url);
+            openLink.target = "_blank";
+            openLink.rel = "noopener noreferrer"; // הגנת אבטחה קריטית
+            openLink.className = "btn-open";
+            openLink.textContent = "פתיחה ↗";
+
+            row.appendChild(dashInfo);
+            row.appendChild(openLink);
 
             if (highlightDashName && dash.name.trim().toLowerCase() === highlightDashName.trim().toLowerCase()) {
                 targetRowElement = row;
@@ -242,7 +321,10 @@
                 subAutoList.innerHTML = "";
                 matches.forEach(m => {
                     const li = document.createElement("li");
-                    li.innerHTML = `<strong>${m.name}</strong>`;
+                    const strong = document.createElement("strong");
+                    strong.textContent = m.name;
+                    li.appendChild(strong);
+
                     li.onclick = () => {
                         subSearch.value = "";
                         subAutoList.style.display = "none";
@@ -281,10 +363,15 @@
                 autoList.innerHTML = "";
                 matches.forEach(m => {
                     const li = document.createElement("li");
-                    li.innerHTML = `
-                        <strong>${m.name}</strong>
-                        <small>(${m.category})</small>
-                    `;
+                    const strong = document.createElement("strong");
+                    strong.textContent = m.name;
+
+                    const small = document.createElement("small");
+                    small.textContent = ` (${m.category})`;
+
+                    li.appendChild(strong);
+                    li.appendChild(small);
+
                     li.onclick = () => {
                         showSubView(m.category, m.name);
                         globalSearch.value = "";
