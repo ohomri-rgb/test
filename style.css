@@ -15,7 +15,6 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    /* הגדרת פונטי מערכת מקומיים לכל העמוד */
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;
 }
 
@@ -25,7 +24,7 @@ body {
     direction: rtl;
 }
 
-/* Header */
+/* Header Navigation Bar */
 .top-nav {
     display: flex;
     align-items: center;
@@ -57,20 +56,11 @@ body {
     color: var(--primary-purple);
 }
 
-.brand-icon {
-    font-size: 22px;
-    background: var(--primary-purple);
-    color: white;
-    padding: 8px 10px;
-    border-radius: 10px;
-}
-
 .brand-text {
     display: flex;
     flex-direction: column;
 }
 
-/* תיקון פונט מקומי עבור "פורטל הדוחות" עם !important למניעת נפילה לסריף */
 .brand-title {
     font-family: "Segoe UI", Tahoma, Geneva, Arial, sans-serif !important;
     font-weight: 800 !important;
@@ -121,14 +111,13 @@ body {
 
 /* Hero Section */
 .hero-section {
-    position: relative; /* נדרש למיקום הלוגו */
+    position: relative;
     background: linear-gradient(135deg, var(--primary-purple) 0%, #3b276b 100%);
     color: white;
     padding: 55px 20px;
     text-align: center;
 }
 
-/* הלוגו בפינה הימנית העליונה של האזור הסגול */
 .hero-logo-img {
     position: absolute;
     top: 20px;
@@ -162,7 +151,6 @@ body {
     background: white;
 }
 
-/* אייקון זכוכית מגדלת בשורות החיפוש */
 .search-icon-img {
     position: absolute;
     left: 18px;
@@ -282,23 +270,24 @@ body {
     font-weight: 700;
 }
 
-.card-icon {
-    font-size: 22px;
+/* עיצוב אייקוני SVG בכרטיסיות הקטגוריה */
+.card-icon-wrapper {
     background: var(--primary-purple-light);
     color: var(--primary-purple);
     padding: 10px;
     border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
 }
 
-.card-icon-img {
-    width: 22px;
-    height: 22px;
-    object-fit: contain;
-    background: var(--primary-purple-light);
-    padding: 10px;
-    border-radius: 10px;
-    box-sizing: content-box;
-    display: inline-block;
+.card-icon-svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--primary-purple);
 }
 
 .card-desc {
@@ -370,30 +359,24 @@ body {
     min-width: 0;
 }
 
-.dash-icon {
-    font-size: 20px;
+/* עיצוב אייקון SVG בשורות הדשבורדים */
+.dash-icon-wrapper {
     background: var(--primary-purple-light);
     color: var(--primary-purple);
-    padding: 8px;
+    padding: 9px;
     border-radius: 8px;
-    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 40px;
     height: 40px;
+    flex-shrink: 0;
 }
 
-/* אייקון דשבורד בשורות הקטגוריה */
-.dash-icon-img {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-    background: var(--primary-purple-light);
-    padding: 9px;
-    border-radius: 8px;
-    flex-shrink: 0;
-    box-sizing: border-box;
+.dash-icon-svg {
+    width: 22px;
+    height: 22px;
+    stroke: var(--primary-purple);
 }
 
 .dash-details {

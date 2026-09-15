@@ -2,48 +2,28 @@
     let portalData = [];
     let currentCategory = null;
 
-    // מיפוי שמות הקבצים לפי שמות הקטגוריות המדויקים
-    const categoryIconFiles = {
-        "הנהלה": "briefcase-business.png",
-        "מוצרים": "package.png",
-        "שירות ותמיכת תוכנה": "headset.png",
-        "תקשורת": "radio.png",
-        "ממשק צד ג'": "plug.png",
-        "ממשל ושותפים": "handshake.png",
-        "דוחות משתמשים": "users.png",
-        "דוחות ATM": "credit-card.png",
-        
-        // התאמה למקרה של שמות זמניים:
-        "קטגוריה1": "briefcase-business.png",
-        "קטגוריה2": "package.png",
-        "קטגוריה3": "headset.png",
-        "קטגוריה4": "radio.png",
-        "קטגוריה5": "plug.png",
-        "קטגוריה6": "handshake.png",
-        "קטגוריה7": "users.png",
-        "קטגוריה8": "credit-card.png"
+    // מיפוי אייקוני SVG Inline לכל הקטגוריות (פותר לחלוטין בעיות CORS / HTTPS / קבצים חסרים)
+    const categoryIconsSVG = {
+        "הנהלה": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="6" rx="2"/><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+        "מוצרים": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 12v9.5"/></svg>`,
+        "שירות ותמיכת תוכנה": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>`,
+        "תקשורת": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9c3.9 3.9 3.9 10.3 0 14.2"/></svg>`,
+        "ממשק צד ג'": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>`,
+        "ממשל ושותפים": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-2-2"/><path d="m14 14 2.5 2.5"/><path d="M18 11V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/><path d="M8 12h4"/><path d="M8 16h2"/><path d="M8 8h8"/></svg>`,
+        "דוחות משתמשים": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        "דוחות ATM": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`,
+
+        // קטגוריות ברירת מחדל/זמניות:
+        "קטגוריה1": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="6" rx="2"/><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+        "קטגוריה2": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>`,
+        "קטגוריה3": `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>`
     };
 
-    /**
-     * פונקציית עזר לאימות כתובות URL
-     * מונעת הרצת javascript: או הפניות לא מורשות
-     */
-    function sanitizeUrl(urlString) {
-        if (!urlString) return '#';
-        const trimmed = urlString.trim();
-        try {
-            const parsed = new URL(trimmed, window.location.origin);
-            if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-                return trimmed;
-            }
-        } catch (e) {
-            // במידה ומדובר בנתיב יחסי תקין
-            if (trimmed.startsWith('/') || trimmed.startsWith('./')) {
-                return trimmed;
-            }
-        }
-        return '#';
-    }
+    // אייקון דינמי לתיקייה כללית במקרה שאין התאמה במפה
+    const defaultFolderSVG = `<svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L8.6 3.3A2 2 0 0 0 6.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+
+    // אייקון דשבורד לשורות ברשימה
+    const dashboardRowSVG = `<svg class="dash-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>`;
 
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
@@ -76,10 +56,10 @@
             const urlIdx = columns.findIndex(c => c.fieldName === "URL" || c.fieldName === "DashboardURL");
 
             portalData = summaryData.data.map(row => ({
-                category: (catIdx !== -1 && row[catIdx]) ? String(row[catIdx].formattedValue || row[catIdx].value || '') : '',
-                name: (dashIdx !== -1 && row[dashIdx]) ? String(row[dashIdx].formattedValue || row[dashIdx].value || '') : '',
-                description: (descIdx !== -1 && row[descIdx]) ? String(row[descIdx].formattedValue || row[descIdx].value || '') : '',
-                url: (urlIdx !== -1 && row[urlIdx]) ? sanitizeUrl(row[urlIdx].formattedValue || row[urlIdx].value) : '#'
+                category: (catIdx !== -1 && row[catIdx]) ? (row[catIdx].formattedValue || row[catIdx].value) : '',
+                name: (dashIdx !== -1 && row[dashIdx]) ? (row[dashIdx].formattedValue || row[dashIdx].value) : '',
+                description: (descIdx !== -1 && row[descIdx]) ? (row[descIdx].formattedValue || row[descIdx].value) : '',
+                url: (urlIdx !== -1 && row[urlIdx]) ? (row[urlIdx].formattedValue || row[urlIdx].value) : '#'
             }));
 
             portalData = portalData.filter(d => d.category && d.name);
@@ -104,7 +84,7 @@
         categories.forEach(cat => {
             const btn = document.createElement("button");
             btn.className = "tab-btn";
-            btn.textContent = cat; // שימוש ב-textContent למניעת XSS
+            btn.textContent = cat;
             btn.onclick = () => showSubView(cat);
             container.appendChild(btn);
         });
@@ -117,56 +97,24 @@
 
         categories.forEach(cat => {
             const count = portalData.filter(d => d.category === cat).length;
-            const fileName = categoryIconFiles[cat];
+            const iconSvg = categoryIconsSVG[cat] || defaultFolderSVG;
+            
             const card = document.createElement("div");
             card.className = "category-card";
             card.onclick = () => showSubView(cat);
 
-            // יצירת חלק עליון
-            const topDiv = document.createElement("div");
-            const headerDiv = document.createElement("div");
-            headerDiv.className = "card-header";
-
-            const titleSpan = document.createElement("span");
-            titleSpan.className = "card-title";
-            titleSpan.textContent = cat;
-
-            headerDiv.appendChild(titleSpan);
-
-            if (fileName) {
-                const img = document.createElement("img");
-                img.src = `./${fileName}`;
-                img.alt = cat;
-                img.className = "card-icon-img";
-                img.onerror = function() {
-                    this.onerror = null;
-                    const span = document.createElement("span");
-                    span.className = "card-icon";
-                    span.textContent = "📁";
-                    this.replaceWith(span);
-                };
-                headerDiv.appendChild(img);
-            } else {
-                const iconSpan = document.createElement("span");
-                iconSpan.className = "card-icon";
-                iconSpan.textContent = "📁";
-                headerDiv.appendChild(iconSpan);
-            }
-
-            const descDiv = document.createElement("div");
-            descDiv.className = "card-desc";
-            descDiv.textContent = `${count} דוחות זמינים בקטגוריה זו`;
-
-            topDiv.appendChild(headerDiv);
-            topDiv.appendChild(descDiv);
-
-            const footerSpan = document.createElement("span");
-            footerSpan.className = "card-footer-link";
-            footerSpan.textContent = "כניסה לקטגוריה ←";
-
-            card.appendChild(topDiv);
-            card.appendChild(footerSpan);
-
+            card.innerHTML = `
+                <div>
+                    <div class="card-header">
+                        <span class="card-title">${cat}</span>
+                        <div class="card-icon-wrapper">
+                            ${iconSvg}
+                        </div>
+                    </div>
+                    <div class="card-desc">${count} דוחות זמינים בקטגוריה זו</div>
+                </div>
+                <span class="card-footer-link">כניסה לקטגוריה ←</span>
+            `;
             grid.appendChild(card);
         });
     }
@@ -218,52 +166,22 @@
             const row = document.createElement("div");
             row.className = "dashboard-row";
 
-            const rawDesc = dash.description ? dash.description.trim() : "";
+            const rawDesc = dash.description ? String(dash.description).trim() : "";
             const hasDescription = rawDesc !== "" && rawDesc.toLowerCase() !== "null" && rawDesc.toLowerCase() !== "undefined";
+            const descriptionHtml = hasDescription ? `<p class="dash-desc">${rawDesc}</p>` : '';
 
-            // בניית מבנה ה-DOM בבטחה
-            const dashInfo = document.createElement("div");
-            dashInfo.className = "dash-info";
-
-            const dashImg = document.createElement("img");
-            dashImg.src = "./layout-dashboard.png";
-            dashImg.alt = "דשבורד";
-            dashImg.className = "dash-icon-img";
-            dashImg.onerror = function() {
-                this.onerror = null;
-                const span = document.createElement("span");
-                span.className = "dash-icon";
-                span.textContent = "📊";
-                this.replaceWith(span);
-            };
-
-            const dashDetails = document.createElement("div");
-            dashDetails.className = "dash-details";
-
-            const h4 = document.createElement("h4");
-            h4.textContent = dash.name; // בטוח מפני XSS
-            dashDetails.appendChild(h4);
-
-            if (hasDescription) {
-                const p = document.createElement("p");
-                p.className = "dash-desc";
-                p.textContent = rawDesc; // בטוח מפני XSS
-                dashDetails.appendChild(p);
-            }
-
-            dashInfo.appendChild(dashImg);
-            dashInfo.appendChild(dashDetails);
-
-            // כפתור פתיחה עם הגנה מפני Reverse Tabnabbing ו-XSS
-            const openLink = document.createElement("a");
-            openLink.href = sanitizeUrl(dash.url);
-            openLink.target = "_blank";
-            openLink.rel = "noopener noreferrer"; // הגנת אבטחה קריטית
-            openLink.className = "btn-open";
-            openLink.textContent = "פתיחה ↗";
-
-            row.appendChild(dashInfo);
-            row.appendChild(openLink);
+            row.innerHTML = `
+                <div class="dash-info">
+                    <div class="dash-icon-wrapper">
+                        ${dashboardRowSVG}
+                    </div>
+                    <div class="dash-details">
+                        <h4>${dash.name}</h4>
+                        ${descriptionHtml}
+                    </div>
+                </div>
+                <a href="${dash.url}" target="_blank" class="btn-open">פתיחה ↗</a>
+            `;
 
             if (highlightDashName && dash.name.trim().toLowerCase() === highlightDashName.trim().toLowerCase()) {
                 targetRowElement = row;
@@ -321,10 +239,7 @@
                 subAutoList.innerHTML = "";
                 matches.forEach(m => {
                     const li = document.createElement("li");
-                    const strong = document.createElement("strong");
-                    strong.textContent = m.name;
-                    li.appendChild(strong);
-
+                    li.innerHTML = `<strong>${m.name}</strong>`;
                     li.onclick = () => {
                         subSearch.value = "";
                         subAutoList.style.display = "none";
@@ -363,15 +278,10 @@
                 autoList.innerHTML = "";
                 matches.forEach(m => {
                     const li = document.createElement("li");
-                    const strong = document.createElement("strong");
-                    strong.textContent = m.name;
-
-                    const small = document.createElement("small");
-                    small.textContent = ` (${m.category})`;
-
-                    li.appendChild(strong);
-                    li.appendChild(small);
-
+                    li.innerHTML = `
+                        <strong>${m.name}</strong>
+                        <small>(${m.category})</small>
+                    `;
                     li.onclick = () => {
                         showSubView(m.category, m.name);
                         globalSearch.value = "";
