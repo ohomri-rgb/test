@@ -118,24 +118,21 @@ body {
     text-align: center;
 }
 
-/* עיצוב מעטפת ועטיפת אייקון ה-SVG הראשי בבאנר */
+/* מיקום ועיצוב לוגו SVG שבא בפינה העליונה */
 .hero-icon-wrapper {
     position: absolute;
     top: 24px;
     right: 32px;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 12px;
-    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(4px);
+    background: transparent;
 }
 
-.hero-icon-svg {
-    width: 36px;
-    height: 36px;
-    stroke: #ffffff;
+.shva-logo-svg {
+    width: 65px;
+    height: 65px;
+    display: block;
 }
 
 .hero-section h1 {
@@ -280,7 +277,7 @@ body {
     font-weight: 700;
 }
 
-/* עיצוב אייקוני SVG בכרטיסיות הקטגוריה */
+/* אייקוני SVG בכרטיסיות הקטגוריה */
 .card-icon-wrapper {
     background: var(--primary-purple-light);
     color: var(--primary-purple);
@@ -369,7 +366,7 @@ body {
     min-width: 0;
 }
 
-/* עיצוב אייקון SVG בשורות הדשבורדים */
+/* אייקון SVG בשורות הדשבורדים */
 .dash-icon-wrapper {
     background: var(--primary-purple-light);
     color: var(--primary-purple);
@@ -469,6 +466,5 @@ body {
     .hero-icon-wrapper {
         position: static;
         margin: 0 auto 15px auto;
-        width: fit-content;
     }
 }
