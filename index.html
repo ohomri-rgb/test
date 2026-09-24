@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פורטל הדוחות</title>
+    <script src="https://cdn.jsdelivr.net/gh/tableau/extensions-api@main/lib/tableau.extensions.1.latest.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation Bar -->
+    <header class="top-nav">
+        <div class="brand" id="brandLogo" title="חזרה לדף הראשי">
+            <img src="./logo_portal.png" alt="לוגו הפורטל" class="brand-logo-img">
+            <div class="brand-text">
+                <span class="brand-title">פורטל הדוחות</span>
+                <span class="brand-subtitle">מבוסס Tableau Server</span>
+            </div>
+        </div>
+        <nav class="category-tabs" id="categoryTabs">
+            <!-- כפתורי קטגוריות דינמיים -->
+        </nav>
+    </header>
+
+    <!-- MAIN VIEW: Categories Level -->
+    <main id="mainView" class="view-container active">
+        <section class="hero-section">
+            <!-- לוגו ימין למעלה בתוך הבאנר הסגול -->
+            <img src="./logo_portal.png" alt="לוגו" class="hero-logo-img">
+
+            <h1>כל הדוחות של הארגון במקום אחד</h1>
+            <div class="search-box-wrapper">
+                <input type="text" id="globalSearchInput" placeholder="חיפוש דשבורד בכל הקטגוריות..." autocomplete="off">
+                <img src="./search.png" alt="חיפוש" class="search-icon-img" onerror="this.onerror=null; this.replaceWith(Object.assign(document.createElement('span'), {className: 'search-icon', textContent: '🔍'}));">
+                <ul id="autocompleteList" class="autocomplete-dropdown"></ul>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>קטגוריות</h2>
+            <div class="categories-grid" id="categoriesGrid"></div>
+        </section>
+    </main>
+
+    <!-- SUB VIEW: Dashboard Level -->
+    <main id="subView" class="view-container">
+        <div class="sub-header-nav">
+            <button class="btn-back" id="btnBack">→ חזרה לכל הקטגוריות</button>
+        </div>
+        
+        <div class="category-title-area">
+            <h1 id="selectedCategoryTitle">שם הקטגוריה</h1>
+            <p id="selectedCategoryDesc" class="category-desc"></p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="search-box-wrapper search-sub">
+                <input type="text" id="subSearchInput" placeholder="חיפוש דשבורד בקטגוריה..." autocomplete="off">
+                <img src="./search.png" alt="חיפוש" class="search-icon-img" onerror="this.onerror=null; this.replaceWith(Object.assign(document.createElement('span'), {className: 'search-icon', textContent: '🔍'}));">
+                <ul id="subAutocompleteList" class="autocomplete-dropdown"></ul>
+            </div>
+        </div>
+
+        <div class="dashboards-list" id="dashboardsList"></div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
