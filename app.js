@@ -23,21 +23,19 @@
         "קטגוריה7": "users.png",
         "קטגוריה8": "credit-card.png"
     };
+    
+document.addEventListener("DOMContentLoaded", function () {
+    // טעינה ישירה ומהירה של קובץ ה-data.json
+    fetchTableauData();
+    setupEventListeners();
 
-    document.addEventListener("DOMContentLoaded", function () {
-        if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
-            window.tableau.extensions.initializeAsync().then(function () {
-                fetchTableauData();
-            }).catch(function (err) {
-                console.error("שגיאה בהפעלת Tableau Extension API:", err);
-            });
-        } else {
-            console.warn("Tableau API לא זוהה - טוען נתוני דמה לבדיקה מקומית");
-            loadMockData();
-        }
-
-        setupEventListeners();
-    });
+    // ניסיון שקט לחיבור ל-Tableau API במידה וצריך (בלי לפגוע בטעינה)
+    if (typeof window.tableau !== 'undefined' && window.tableau.extensions) {
+        window.tableau.extensions.initializeAsync().catch(function (err) {
+            console.warn("Tableau Extension API init bypassed:", err);
+        });
+    }
+});
 
 async function fetchTableauData() {
     try {
