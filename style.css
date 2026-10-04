@@ -121,11 +121,11 @@ body {
 
 /* Hero Section */
 .hero-section {
-    position: relative; /* נדרש למיקום הלוגו */
- background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('./hero-bg.jpg');
-background-size: cover;
-background-position: center;
-background-repeat: no-repeat;
+position: relative; /* נדרש למיקום הלוגו */
+    background-image: url('./hero-bg.jpg');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
     color: white;
     padding: 55px 20px;
     text-align: center;
