@@ -39,34 +39,26 @@
         setupEventListeners();
     });
 
-    async function fetchTableauData() {
-        try {
-            const dashboard = window.tableau.extensions.dashboardContent.dashboard;
-            const worksheet = dashboard.worksheets.find(w => w.name === "Sheet 1") || dashboard.worksheets[0];
-            
-            if (!worksheet) return;
-
-            const summaryData = await worksheet.getSummaryDataAsync();
-            const columns = summaryData.columns;
-            
-            const catIdx = columns.findIndex(c => c.fieldName === "קטגוריה" || c.fieldName === "Category");
-            const dashIdx = columns.findIndex(c => c.fieldName === "דשבורד" || c.fieldName === "Dashboard");
-            const descIdx = columns.findIndex(c => c.fieldName === "תיאור" || c.fieldName === "Description");
-            const urlIdx = columns.findIndex(c => c.fieldName === "URL" || c.fieldName === "DashboardURL");
-
-            portalData = summaryData.data.map(row => ({
-                category: (catIdx !== -1 && row[catIdx]) ? (row[catIdx].formattedValue || row[catIdx].value) : '',
-                name: (dashIdx !== -1 && row[dashIdx]) ? (row[dashIdx].formattedValue || row[dashIdx].value) : '',
-                description: (descIdx !== -1 && row[descIdx]) ? (row[descIdx].formattedValue || row[descIdx].value) : '',
-                url: (urlIdx !== -1 && row[urlIdx]) ? (row[urlIdx].formattedValue || row[urlIdx].value) : '#'
-            }));
-
-            portalData = portalData.filter(d => d.category && d.name);
-            renderPortal();
-        } catch (error) {
-            console.error("שגיאה בשליפת הנתונים מטאבלו:", error);
+async function fetchTableauData() {
+    try {
+        // טעינת קובץ ה-JSON הסטטי מאותה התיקייה ב-IIS
+        const response = await fetch('./data.json');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        portalData = await response.json();
+
+        // סינון רשומות ריקות ורינדור הפורטל
+        portalData = portalData.filter(d => d.category && d.name);
+        renderPortal();
+
+    } catch (error) {
+        console.error("שגיאה שטעינת data.json:", error);
+        loadMockData(); // טעינת נתוני גיבוי במקרה של שגיאה
     }
+}
 
     function renderPortal() {
         const categories = [...new Set(portalData.map(item => item.category))].filter(Boolean);
