@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<title>RTL Table</title>
+<style>
+@font-face{font-family:'Noto Sans Hebrew';src:url('NotoSansHebrew-Regular.ttf') format('truetype');font-weight:400;font-style:normal}
+@font-face{font-family:'Noto Sans Hebrew';src:url('NotoSansHebrew-SemiBold.ttf') format('truetype');font-weight:600;font-style:normal}
+@font-face{font-family:'Noto Sans Hebrew';src:url('NotoSansHebrew-ExtraBold.ttf') format('truetype');font-weight:800;font-style:normal}
+</style>
+<script src="tableau.extensions.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#fff;font-family:'Noto Sans Hebrew',sans-serif;direction:rtl}
+#app{width:100%;height:100%;display:flex;flex-direction:column;opacity:0;transition:opacity .25s ease}
+#error{display:none;font-size:11px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px 10px;margin:8px;flex-shrink:0}
+#table-wrap{flex:1;min-height:0;overflow:auto}
+table{border-collapse:collapse;direction:rtl;table-layout:fixed}
+
+thead tr:first-child th,
+thead tr:nth-child(2) th{position:sticky;z-index:3;background:#f3f4f6;text-align:right;white-space:nowrap;border-bottom:1px solid #e5e7eb}
+thead tr:first-child th{top:0;padding:8px 12px 7px;font-size:18px;font-weight:600;color:#374151;user-select:none}
+thead tr:nth-child(2) th{top:34px;padding:3px 6px 4px;border-bottom-color:#c7d2fe;border-bottom-width:2px}
+
+.filter-btn{display:flex;align-items:center;gap:4px;font-size:11px;font-family:'Noto Sans Hebrew',sans-serif;border:1px solid #d1d5db;border-radius:5px;padding:2px 7px 2px 5px;background:#fff;color:#374151;direction:rtl;cursor:pointer;white-space:nowrap;width:100%;transition:border-color .15s}
+.filter-btn:hover{border-color:#6366f1;color:#6366f1}
+.filter-btn.active{border-color:#6366f1;background:#eef2ff;color:#4338ca;font-weight:600}
+.filter-btn .arrow{font-size:9px;opacity:.6;flex-shrink:0;margin-right:auto}
+.filter-btn .btn-label{flex:1;overflow:hidden;text-overflow:ellipsis;text-align:right}
+
+.dd-panel{position:fixed;z-index:9999;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.13);min-width:160px;max-width:220px;display:none;flex-direction:column;overflow:hidden}
+.dd-panel.open{display:flex}
+.dd-search{padding:6px 8px;border-bottom:1px solid #f3f4f6}
+.dd-search input{width:100%;font-size:11px;font-family:'Noto Sans Hebrew',sans-serif;border:1px solid #e5e7eb;border-radius:4px;padding:3px 7px;direction:rtl;outline:none}
+.dd-search input:focus{border-color:#6366f1}
+.dd-list{max-height:200px;overflow-y:auto;padding:4px 0}
+.dd-item{display:flex;align-items:center;gap:7px;padding:5px 10px;font-size:12px;color:#374151;cursor:pointer;direction:rtl;user-select:none}
+.dd-item:hover{background:#f5f3ff}
+.dd-item input[type=checkbox]{accent-color:#6366f1;width:13px;height:13px;flex-shrink:0;cursor:pointer}
+.dd-item label{cursor:pointer;flex:1;text-align:right}
+.dd-footer{display:flex;gap:6px;padding:6px 8px;border-top:1px solid #f3f4f6}
+.dd-footer button{flex:1;font-size:11px;font-family:'Noto Sans Hebrew',sans-serif;border-radius:5px;padding:3px 0;cursor:pointer;border:1px solid;transition:background .12s}
+.btn-all{background:#fff;border-color:#d1d5db;color:#374151}
+.btn-all:hover{background:#f9fafb}
+.btn-apply{background:#6366f1;border-color:#6366f1;color:#fff;font-weight:600}
+.btn-apply:hover{background:#4338ca}
+
+td{padding:7px 12px;font-size:12px;color:#111;text-align:right;border-bottom:1px solid #f3f4f6;white-space:nowrap;vertical-align:top}
+td.num{text-align:right}
+td.wrap{white-space:normal;word-break:break-word;line-height:1.6}
+tbody tr:nth-child(even){background:#f9fafb}
+tbody tr:hover{background:#eef2ff}
+tbody tr.hidden-row{display:none}
+#footer{font-size:10px;color:#d1d5db;text-align:left;direction:ltr;padding:3px 8px;flex-shrink:0}
+</style></head><body>
+<div id="app">
+  <div id="error"></div>
+  <div id="table-wrap">
+    <table><thead><tr id="hrow"></tr><tr id="frow"></tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+  <div id="footer">v21-summary</div>
+</div>
+<div class="dd-panel" id="dd-panel">
+  <div class="dd-search"><input type="text" id="dd-search-input" placeholder="חיפוש..."/></div>
+  <div class="dd-list" id="dd-list"></div>
+  <div class="dd-footer">
+    <button class="btn-all" id="btn-all">הכל</button>
+    <button class="btn-apply" id="btn-apply">החל</button>
+  </div>
+</div>
+
+<script>
+const G = id => document.getElementById(id);
+const cleanName = s => s.replace(/^(sum|avg|count|min|max|attr|median|year|month|day|quarter|week)\s*\(/i,'').replace(/\)$/,'').trim();
+const norm = s => {
+  let r = String(s||'');
+  for(let i=0;i<6;i++) r = r.replace(/^(sum|avg|count|min|max|attr|median|year|month|day|quarter|week|cnt|truncated)\s*\(/i,'').replace(/\)$/,'').trim();
+  return r.toLowerCase().replace(/[\s_]/g,'');
+};
+
+const fmtCell = (val, fval, dataType) => {
+  if (val==null||val===''||val==='%null%') return {text:'—',num:false};
+  const t = (dataType||'').toLowerCase();
+  if (t.includes('date')) return {text:fval||String(val),num:false};
+  if (/float|real|double|number/.test(t)) { const n=parseFloat(val); return {text:isNaN(n)?(fval||String(val)):n.toLocaleString('en-US'),num:true}; }
+  if (/int/.test(t)) { const n=parseInt(val,10); return {text:isNaN(n)?(fval||String(val)):n.toLocaleString('en-US'),num:true}; }
+  return {text:fval||String(val),num:false};
+};
+
+const applyParamOrder = (rawCols, paramValue) => {
+  if (!paramValue?.trim()) return rawCols;
+  const ordered = paramValue.split(',').map(s=>s.trim()).filter(Boolean);
+  const normMap = Object.fromEntries(rawCols.map(c=>[norm(c.fieldName),c]));
+  const used = new Set(), mapped = [];
+  ordered.forEach(name => {
+    const col = normMap[norm(name)];
+    if (col && !used.has(col.fieldName)) { mapped.push(col); used.add(col.fieldName); }
+  });
+  return mapped;
+};
+
+let ws=null, timer=null, firstLoad=true, activeFilters={};
+let _ddCi=-1, _ddVals=[], _ddSelected=null, _ddBtnEl=null;
+
+const closeDropdown = () => { G('dd-panel').classList.remove('open'); _ddCi=-1; };
+
+const updateFilterBtn = ci => {
+  const btn = document.querySelector(`.filter-btn[data-ci="${ci}"]`);
+  if (!btn) return;
+  const sel = activeFilters[ci], active = sel?.size>0;
+  btn.classList.toggle('active', active);
+  btn.querySelector('.btn-label').textContent = active
+    ? (sel.size===1?[...sel][0]:`${sel.size} נבחרו`) : 'הכל';
+};
+
+const applyFilters = () => {
+  G('tbody').querySelectorAll('tr').forEach(tr => {
+    const hide = Object.entries(activeFilters).some(([ci,sel]) => {
+      if (!sel?.size) return false;
+      const td = tr.children[parseInt(ci)];
+      return td && !sel.has(td.textContent);
+    });
+    tr.classList.toggle('hidden-row', hide);
+  });
+};
+
+const renderDdList = (vals, search) => {
+  const q = search.toLowerCase();
+  G('dd-list').innerHTML = vals.filter(v=>v.toLowerCase().includes(q)).map((v,i) => {
+    const esc = v.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    return `<div class="dd-item" data-v="${esc}"><input type="checkbox" ${_ddSelected.has(v)?'checked':''} id="chk_${i}"/><label for="chk_${i}">${esc}</label></div>`;
+  }).join('');
+};
+
+const openDropdown = (ci, vals, btnEl) => {
+  _ddCi=ci; _ddVals=vals; _ddSelected=new Set(activeFilters[ci]||[]); _ddBtnEl=btnEl;
+  G('dd-search-input').value='';
+  renderDdList(vals,'');
+  const panel=G('dd-panel'), rect=btnEl.getBoundingClientRect();
+  panel.classList.add('open');
+  let top=rect.bottom+2, left=rect.left;
+  if(left+220>window.innerWidth) left=window.innerWidth-224;
+  if(top+250>window.innerHeight) top=rect.top-254;
+  panel.style.top=top+'px'; panel.style.left=left+'px';
+};
+
+G('dd-search-input').addEventListener('input', e => renderDdList(_ddVals, e.target.value));
+G('dd-list').addEventListener('change', e => {
+  if (e.target.type!=='checkbox') return;
+  const v = e.target.closest('.dd-item').dataset.v;
+  e.target.checked ? _ddSelected.add(v) : _ddSelected.delete(v);
+});
+
+G('btn-all').addEventListener('click', () => {
+  if(_ddCi<0) return;
+  activeFilters[_ddCi]=new Set(); updateFilterBtn(_ddCi); applyFilters(); closeDropdown();
+});
+G('btn-apply').addEventListener('click', () => {
+  if(_ddCi<0) return;
+  activeFilters[_ddCi]=new Set(_ddSelected); updateFilterBtn(_ddCi); applyFilters(); closeDropdown();
+});
+document.addEventListener('click', e => {
+  if(!G('dd-panel').classList.contains('open')) return;
+  if(!G('dd-panel').contains(e.target)&&!_ddBtnEl?.contains(e.target)) closeDropdown();
+});
+
+async function load() {
+  G('error').style.display='none';
+  activeFilters={}; closeDropdown();
+  try {
+    let paramValue='';
+    try {
+      const params = await ws.getParametersAsync();
+      const p = params.find(p=>p.name.toLowerCase()==='columns');
+      if (p) {
+        const cv=p.currentValue;
+        paramValue=String(cv.value??cv.formattedValue??cv.nativeValue??'').trim();
+        if (!paramValue && p.allowableValues?.list?.length)
+          paramValue=String(p.allowableValues.list[0].value||p.allowableValues.list[0].formattedValue||'').trim();
+      }
+    } catch(e) { console.warn('Could not read parameters:', e); }
+
+    // שימוש ב-getSummaryDataAsync במקום getSummaryDataReaderAsync כדי לעבוד עם הרשאת Summary רגילה
+    const dt = await ws.getSummaryDataAsync({ignoreSelection:true});
+    const rawCols=dt.columns, rows=dt.data;
+    if (!rawCols.length) { G('error').textContent='No fields found. Drag fields to the Detail marks card.'; G('error').style.display='block'; if(firstLoad){G('app').style.opacity='1';firstLoad=false;} return; }
+
+    const cols=applyParamOrder(rawCols,paramValue);
+    const colIdxMap=cols.map(c=>rawCols.findIndex(rc=>rc.fieldName===c.fieldName));
+
+    const uniqueVals=cols.map(()=>new Set());
+    rows.forEach(r=>cols.forEach((_,ci)=>uniqueVals[ci].add(fmtCell(r[colIdxMap[ci]].value,r[colIdxMap[ci]].formattedValue,cols[ci].dataType).text)));
+
+    const hrow=G('hrow'), frow=G('frow');
+    hrow.innerHTML=''; frow.innerHTML='';
+
+    const isStrCol = cols.map(c => {
+      const t=(c.dataType||'').toLowerCase();
+      return !(/float|real|double|number|int|date|bool/.test(t));
+    });
+
+    const colW = cols.map((c,ci)=>{
+      const headerW = cleanName(c.fieldName).length * 9 + 28;
+      const maxValLen = Array.from(uniqueVals[ci]).reduce((mx,v)=>Math.max(mx,String(v).length), 0);
+      const dataW = Math.min(maxValLen, 30) * 8 + 24;
+      if (isStrCol[ci] && maxValLen > 40) return 280;
+      return Math.min(Math.max(80, headerW, dataW), 400);
+    });
+
+    const tbl=document.querySelector('table');
+    const oldCg=tbl.querySelector('colgroup'); if(oldCg) oldCg.remove();
+    const cg=document.createElement('colgroup');
+    colW.forEach(w=>{ const col=document.createElement('col'); col.style.width=w+'px'; cg.appendChild(col); });
+    tbl.insertBefore(cg,tbl.firstChild);
+    tbl.style.width=colW.reduce((s,w)=>s+w,0)+'px';
+
+    cols.forEach((c,ci)=>{
+      const th=document.createElement('th');
+      th.textContent=cleanName(c.fieldName);
+      hrow.appendChild(th);
+
+      const vals=Array.from(uniqueVals[ci]).sort((a,b)=>{
+        const na=parseFloat(a.replace(/,/g,'')), nb=parseFloat(b.replace(/,/g,''));
+        return (!isNaN(na)&&!isNaN(nb)) ? na-nb : String(a).localeCompare(String(b),'he');
+      });
+      const btn=document.createElement('button');
+      btn.className='filter-btn'; btn.dataset.ci=ci;
+      btn.innerHTML=`<span class="arrow">▼</span><span class="btn-label">הכל</span>`;
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        (G('dd-panel').classList.contains('open')&&_ddCi===ci) ? closeDropdown() : openDropdown(ci,vals,btn);
+      });
+      const fth=document.createElement('th');
+      fth.appendChild(btn); frow.appendChild(fth);
+    });
+
+    const tbody=G('tbody');
+    tbody.innerHTML='';
+    const frag=document.createDocumentFragment();
+    rows.forEach(r=>{
+      const tr=document.createElement('tr');
+      cols.forEach((_,ci)=>{
+        const cell=r[colIdxMap[ci]], td=document.createElement('td');
+        const fmt=fmtCell(cell.value,cell.formattedValue,cols[ci].dataType);
+        if(fmt.num){td.className='num';td.innerHTML=`<span style="direction:ltr;unicode-bidi:embed">${fmt.text}</span>`;}
+        else{td.textContent=fmt.text;if(isStrCol[ci])td.classList.add('wrap');}
+        tr.appendChild(td);
+      });
+      frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+
+    if(firstLoad){G('app').style.opacity='1';firstLoad=false;}
+  } catch(e) {
+    console.error('error:',e);
+    G('error').textContent=e.message||'Unknown error — check the browser console.';
+    G('error').style.display='block';
+    if(firstLoad){G('app').style.opacity='1';firstLoad=false;}
+  }
+}
+
+async function init() {
+  if(typeof tableau==='undefined'){setTimeout(init,50);return;}
+  await tableau.extensions.initializeAsync();
+  ws=tableau.extensions.worksheetContent.worksheet;
+  load();
+  ws.addEventListener(tableau.TableauEventType.SummaryDataChanged,()=>{clearTimeout(timer);timer=setTimeout(load,150);});
+  try {
+    const params=await ws.getParametersAsync();
+    params.forEach(p=>p.addEventListener(tableau.TableauEventType.ParameterChanged,()=>{clearTimeout(timer);timer=setTimeout(load,150);}));
+  } catch(e){console.warn('Param listener failed:',e);}
+}
+window.onload=init;
+</script>
+</body></html>
