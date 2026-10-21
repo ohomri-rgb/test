@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v4.2.0-ExactYearMatch";
+    const VERSION = "v4.3.0-RobustFix";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -56,7 +56,7 @@
                     rawMaxDate = new Date(domainInfo.max.value);
                 }
             } catch (domainError) {
-                console.warn("[Tableau Extension] Could not fetch domain via getDomainAsync, using fallback logic.");
+                console.warn("[Tableau Extension] Could not fetch domain via getDomainAsync, using fallback logic.", domainError);
             }
 
             // --- שלב 3: מנגנון הגנה (Fallback) ---
@@ -94,21 +94,29 @@
                 rawMaxDate = new Date();
             }
 
-            // --- שלב 4: חישוב תאריכים מדויק ---
-            let maxYear = rawMaxDate.getFullYear();
-            let maxMonth = rawMaxDate.getMonth(); // 0 עד 11 (למשל 9 עבור אוקטובר)
+            // --- שלב 4: חילוץ שנה וחודש בצורה בטוחה (תמיכה ב-UTC למניעת הפרשי שעות) ---
+            let maxYear = rawMaxDate.getUTCFullYear() || rawMaxDate.getFullYear();
+            let maxMonth = rawMaxDate.getUTCMonth() !== undefined ? rawMaxDate.getUTCMonth() : rawMaxDate.getMonth();
 
-            // תאריך סיום: ה-1 לחודש הנוכחי (למשל 01.10.2026)
-            let truncatedMaxDate = new Date(maxYear, maxMonth, 1, 0, 0, 0);
+            // יצירת התאריכים בצורה מדויקת לתחילת החודש
+            let truncatedMaxDate = new Date(maxYear, maxMonth, 1);
+            let calculatedMinDate = new Date(maxYear - 1, maxMonth, 1);
 
-            // תאריך התחלה: בדיוק שנה אחורה באותו החודש (למשל 01.10.2025)
-            let calculatedMinDate = new Date(maxYear - 1, maxMonth, 1, 0, 0, 0);
-
-            // --- שלב 5: עדכון הפילטר בטאבלו ---
-            await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
-                min: calculatedMinDate,
-                max: truncatedMaxDate
+            console.log("[DateUpdater] Applying Filter Range:", {
+                min: calculatedMinDate.toLocaleDateString(),
+                max: truncatedMaxDate.toLocaleDateString()
             });
+
+            // --- שלב 5: עדכון הפילטר בטאבלו עם מעטפת שגיאות מפורטת ---
+            try {
+                await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
+                    min: calculatedMinDate,
+                    max: truncatedMaxDate
+                });
+            } catch (filterError) {
+                console.error("[DateUpdater] applyRangeFilterAsync failed:", filterError);
+                throw new Error(`שגיאה בהחלת הפילטר בטאבלו: ${filterError.message}`);
+            }
 
             // --- שלב 6: עדכון ה-UI למשתמש ---
             renderUI(
@@ -120,7 +128,7 @@
             );
 
         } catch (error) {
-            renderError(`שגיאה בתהליך הסנכרון המהיר: ${error.message}`);
+            renderError(`שגיאה בתהליך הסנכרון: ${error.message}`);
         }
     }
 
@@ -218,7 +226,7 @@
                     פילטר: <strong>${filterName}</strong>
                 </div>
                 <div class="date-display">
-                    <span class="date-label">טווח מדויק (שנה אחורה):</span>
+                    <span class="date-label">טווח מוצלח (שנה אחורה):</span>
                     <span class="date-value">${startDateFormatted} - ${endDateFormatted}</span>
                 </div>
             </div>
