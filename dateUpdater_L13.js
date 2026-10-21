@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v3.8.0-StrictMonthStart";
+    const VERSION = "v3.9.0-CacheBuster";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -59,7 +59,7 @@
                 console.warn("[Tableau Extension] Could not fetch domain via getDomainAsync, using fallback logic.");
             }
 
-            // --- שלב 3: מנגנון הגנה (Fallback) אם לא נשלף תאריך max מה-Domain ---
+            // --- שלב 3: מנגנון הגנה (Fallback) ---
             if (!absoluteMaxDate || isNaN(absoluteMaxDate.getTime())) {
                 let absoluteMinDate = targetFilter.minValue ? new Date(targetFilter.minValue.value) : new Date(2023, 0, 1);
                 let temporaryFutureDate = new Date(2030, 11, 31);
@@ -90,33 +90,31 @@
                 }
             }
 
-            // הגנה סופית על ה-Max
             if (!absoluteMaxDate || isNaN(absoluteMaxDate.getTime())) {
                 absoluteMaxDate = new Date();
             }
 
-            // --- שלב 4: טראנקייט קשיח לתחילת החודש (יום 1 תמיד) עבור ה-Max ---
-            // לדוגמה: 31.10.2026 יהפוך בדיוק ל-01.10.2026
+            // --- שלב 4: טראנקייט קשיח לתחילת החודש (יום 1) עבור ה-Max ---
             let maxYear = absoluteMaxDate.getFullYear();
             let maxMonth = absoluteMaxDate.getMonth();
             let truncatedMaxDate = new Date(maxYear, maxMonth, 1);
 
-            // --- שלב 5: חישוב מדויק של מינוס 13 חודשים אחורה עבור ה-Min (תמיד יום 1 בחודש) ---
-            // לדוגמה: מ-01.10.2026 פחות 13 חודשים ייתן בדיוק 01.10.2025
+            // --- שלב 5: חישוב מדויק של מינוס 13 חודשים (תמיד יום 1 בחודש) ---
             let calculatedMinDate = new Date(maxYear, maxMonth - 13, 1);
 
-            // --- שלב 6: עדכון יחיד וסופי של הפילטר ---
+            // --- שלב 6: עדכון הפילטר בטאבלו ---
             await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
                 min: calculatedMinDate,
                 max: truncatedMaxDate
             });
 
-            // --- שלב 7: עדכון ה-UI למשתמש ---
+            // --- שלב 7: עדכון ה-UI (כולל הצגת מספר הגרסה למניעת ספק) ---
             renderUI(
                 calculatedMinDate.toLocaleDateString('he-IL'), 
                 truncatedMaxDate.toLocaleDateString('he-IL'), 
                 targetFilterName, 
-                targetWorksheet.name
+                targetWorksheet.name,
+                VERSION
             );
 
         } catch (error) {
@@ -124,7 +122,7 @@
         }
     }
 
-    function renderUI(startDateFormatted, endDateFormatted, filterName, sheetName) {
+    function renderUI(startDateFormatted, endDateFormatted, filterName, sheetName, version) {
         const container = document.getElementById("statusMessage");
         if (!container) return;
         
@@ -150,8 +148,13 @@
                 .status-header {
                     display: flex;
                     align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                }
+                .status-title-group {
+                    display: flex;
+                    align-items: center;
                     gap: 8px;
-                    margin-bottom: 10px;
                 }
                 .status-dot {
                     width: 8px;
@@ -165,6 +168,14 @@
                     color: #0f172a;
                     font-weight: 600;
                     font-size: 13px;
+                }
+                .version-badge {
+                    font-size: 10px;
+                    background: #f1f5f9;
+                    color: #475569;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    font-family: monospace;
                 }
                 .meta-info {
                     font-size: 11px;
@@ -194,15 +205,18 @@
             
             <div class="status-card">
                 <div class="status-header">
-                    <span class="status-dot"></span>
-                    <span class="status-title">טווח תאריכים עודכן בהצלחה</span>
+                    <div class="status-title-group">
+                        <span class="status-dot"></span>
+                        <span class="status-title">טווח תאריכים עודכן</span>
+                    </div>
+                    <span class="version-badge">${version}</span>
                 </div>
                 <div class="meta-info">
                     גיליון: <strong>${sheetName}</strong><br>
                     פילטר: <strong>${filterName}</strong>
                 </div>
                 <div class="date-display">
-                    <span class="date-label">טווח 13 חודשים מעודכן:</span>
+                    <span class="date-label">טווח מדויק (13 חודשים):</span>
                     <span class="date-value">${startDateFormatted} - ${endDateFormatted}</span>
                 </div>
             </div>
