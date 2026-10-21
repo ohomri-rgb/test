@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v3.6.0-13Months";
+    const VERSION = "v3.7.0-TruncateMonth";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -95,17 +95,21 @@
                 absoluteMaxDate = new Date();
             }
 
-            // --- שלב 4: חישוב תאריך ההתחלה (מינוס 13 חודשים מ-absoluteMaxDate) ---
+            // --- שלב 4: טראנקייט (Truncate) לתחילת חודש עבור ה-Max ---
+            // לדוגמה: 23-12-2026 יהפוך ל-01-12-2026
+            absoluteMaxDate = new Date(absoluteMaxDate.getFullYear(), absoluteMaxDate.getMonth(), 1);
+
+            // --- שלב 5: חישוב תאריך ההתחלה (מינוס 13 חודשים מ-absoluteMaxDate המעודכן) ---
             let calculatedMinDate = new Date(absoluteMaxDate);
             calculatedMinDate.setMonth(calculatedMinDate.getMonth() - 13);
 
-            // --- שלב 5: עדכון יחיד וסופי של הפילטר (Min = מקס פחות 13 חודשים, Max = מקס) ---
+            // --- שלב 6: עדכון יחיד וסופי של הפילטר ---
             await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
                 min: calculatedMinDate,
                 max: absoluteMaxDate
             });
 
-            // --- שלב 6: עדכון ה-UI למשתמש ---
+            // --- שלב 7: עדכון ה-UI למשתמש ---
             renderUI(
                 calculatedMinDate.toLocaleDateString('he-IL'), 
                 absoluteMaxDate.toLocaleDateString('he-IL'), 
@@ -196,7 +200,7 @@
                     פילטר: <strong>${filterName}</strong>
                 </div>
                 <div class="date-display">
-                    <span class="date-label">טווח 13 חודשים שנבחר:</span>
+                    <span class="date-label">טווח 13 חודשים מעודכן:</span>
                     <span class="date-value">${startDateFormatted} - ${endDateFormatted}</span>
                 </div>
             </div>
