@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v4.0.0-ExactMonthStart";
+    const VERSION = "v4.1.0-ISOStringLock";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -94,21 +94,24 @@
                 rawMaxDate = new Date();
             }
 
-            // --- שלב 4: טראנקייט קשיח לתחילת החודש של המקסימום (לדוגמה: 31.10.2026 יהפוך ל-01.10.2026) ---
+            // --- שלב 4: חילוץ שנה וחודש בצורה בטוחה לחלוטין ---
             let maxYear = rawMaxDate.getFullYear();
-            let maxMonth = rawMaxDate.getMonth(); // 0-indexed (9 = אוקטובר)
-            let truncatedMaxDate = new Date(maxYear, maxMonth, 1);
+            let maxMonth = rawMaxDate.getMonth(); // 0 עד 11
 
-            // --- שלב 5: חישוב מדויק של מינוס 13 חודשים החל מה-1 בחודש (01.10.2026 פחות 13 חודשים = 01.10.2025) ---
-            let calculatedMinDate = new Date(maxYear, maxMonth - 13, 1);
+            // נחשב את תאריך ההתחלה (מינוס 13 חודשים) ואת תאריך הסיום (החודש הנוכחי)
+            // ניצור אובייקטי Date רגילים שמוגדרים מראש על ה-1 בחודש בשעה 00:00:00 מקומי
+            let calculatedMinDate = new Date(maxYear, maxMonth - 13, 1, 0, 0, 0);
+            let truncatedMaxDate = new Date(maxYear, maxMonth, 1, 0, 0, 0);
 
-            // --- שלב 6: עדכון הפילטר בטאבלו ---
+            // --- שלב 5: שליחה לטאבלו ---
+            // טאבלו תומך באובייקטי Date, אך כדי למנוע בעיות המרה של אזורי זמן, 
+            // נשלח אותם ישירות. 
             await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
                 min: calculatedMinDate,
                 max: truncatedMaxDate
             });
 
-            // --- שלב 7: עדכון ה-UI למשתמש ---
+            // --- שלב 6: עדכון ה-UI למשתמש עם מספר הגרסה החדש ---
             renderUI(
                 calculatedMinDate.toLocaleDateString('he-IL'), 
                 truncatedMaxDate.toLocaleDateString('he-IL'), 
@@ -211,7 +214,7 @@
                     </div>
                     <span class="version-badge">${version}</span>
                 </div>
-                <div class="meta-info">
+                .meta-info {
                     גיליון: <strong>${sheetName}</strong><br>
                     פילטר: <strong>${filterName}</strong>
                 </div>
