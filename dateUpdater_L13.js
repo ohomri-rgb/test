@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v4.5.0-FinalFix";
+    const VERSION = "v4.6.0-SafeDomainGuard";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -47,21 +47,28 @@
 
             const targetFilterName = targetFilter.fieldName;
             
-            // --- שלב 2: שליפת תאריך המקסימום הגולמי מהדומיין ---
+            // --- שלב 2: שליפת תאריך המקסימום הגולמי עם בדיקת תקינות קשיחה ---
             let rawMaxDate = null;
 
             try {
                 const domainInfo = await targetFilter.getDomainAsync();
                 if (domainInfo && domainInfo.max && domainInfo.max.value) {
-                    rawMaxDate = new Date(domainInfo.max.value);
+                    const parsed = new Date(domainInfo.max.value);
+                    if (!isNaN(parsed.getTime())) {
+                        rawMaxDate = parsed;
+                    }
                 }
             } catch (domainError) {
                 console.warn("[DateUpdater] Could not fetch domain via getDomainAsync, using fallback logic.", domainError);
             }
 
-            // --- שלב 3: מנגנון הגנה (Fallback) ---
+            // --- שלב 3: מנגנון הגנה (Fallback) אם הדומיין ריק או מחזיר שגיאה ---
             if (!rawMaxDate || isNaN(rawMaxDate.getTime())) {
-                let absoluteMinDate = targetFilter.minValue ? new Date(targetFilter.minValue.value) : new Date(Date.UTC(2023, 0, 1));
+                // בדיקה האם יש לפילטר minValue תקין
+                let absoluteMinDate = (targetFilter.minValue && targetFilter.minValue.value && !isNaN(new Date(targetFilter.minValue.value).getTime())) 
+                    ? new Date(targetFilter.minValue.value) 
+                    : new Date(Date.UTC(2023, 0, 1));
+                
                 let temporaryFutureDate = new Date(Date.UTC(2030, 11, 31));
                 
                 await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
@@ -79,7 +86,7 @@
                     let maxTime = 0;
                     summaryData.data.forEach(row => {
                         const rawCell = row[dateColumnIndex];
-                        if (rawCell) {
+                        if (rawCell && rawCell.value) {
                             let parsedDate = new Date(rawCell.value);
                             if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() > maxTime) {
                                 maxTime = parsedDate.getTime();
@@ -90,24 +97,30 @@
                 }
             }
 
+            // הגנה סופית בהחלט: אם עדיין אין תאריך תקין, ניקח את התאריך הנוכחי
             if (!rawMaxDate || isNaN(rawMaxDate.getTime())) {
                 rawMaxDate = new Date();
             }
 
-            // --- שלב 4: שימוש ב-UTC למניעת זליגות אזורי זמן ---
-            let maxYear = rawMaxDate.getUTCFullYear() || rawMaxDate.getFullYear();
-            let maxMonth = rawMaxDate.getUTCMonth() !== undefined ? rawMaxDate.getUTCMonth() : rawMaxDate.getMonth();
+            // --- שלב 4: חילוץ שנה וחודש בצורה בטוחה לחלוטין ---
+            let maxYear = !isNaN(rawMaxDate.getUTCFullYear()) ? rawMaxDate.getUTCFullYear() : rawMaxDate.getFullYear();
+            let maxMonth = !isNaN(rawMaxDate.getUTCMonth()) ? rawMaxDate.getUTCMonth() : rawMaxDate.getMonth();
 
             let truncatedMaxDate = new Date(Date.UTC(maxYear, maxMonth, 1));
             let calculatedMinDate = new Date(Date.UTC(maxYear - 1, maxMonth, 1));
 
-            // --- שלב 5: החלת הפילטר בטאבלו (Min = שנה אחורה, Max = תחילת החודש הנוכחי) ---
+            // בדיקת ביטחון נוספת לפני שליחה לטאבלו
+            if (isNaN(truncatedMaxDate.getTime()) || isNaN(calculatedMinDate.getTime())) {
+                throw new Error("התאריכים המחושבים אינם תקינים (NaN).");
+            }
+
+            // --- שלב 5: החלת הפילטר בטאבלו ---
             await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
                 min: calculatedMinDate,
                 max: truncatedMaxDate
             });
 
-            // --- שלב 6: עדכון ה-UI למשתמש (סדר תצוגה נכון: מ-Min עד Max) ---
+            // --- שלב 6: עדכון ה-UI למשתמש ---
             renderUI(
                 calculatedMinDate.toLocaleDateString('he-IL', {timeZone: 'UTC'}), 
                 truncatedMaxDate.toLocaleDateString('he-IL', {timeZone: 'UTC'}), 
