@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v3.9.0-CacheBuster";
+    const VERSION = "v4.0.0-ExactMonthStart";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -47,20 +47,20 @@
 
             const targetFilterName = targetFilter.fieldName;
             
-            // --- שלב 2: שליפת תאריך המקסימום העדכני ---
-            let absoluteMaxDate = null;
+            // --- שלב 2: שליפת תאריך המקסימום הגולמי מהדומיין ---
+            let rawMaxDate = null;
 
             try {
                 const domainInfo = await targetFilter.getDomainAsync();
                 if (domainInfo && domainInfo.max && domainInfo.max.value) {
-                    absoluteMaxDate = new Date(domainInfo.max.value);
+                    rawMaxDate = new Date(domainInfo.max.value);
                 }
             } catch (domainError) {
                 console.warn("[Tableau Extension] Could not fetch domain via getDomainAsync, using fallback logic.");
             }
 
-            // --- שלב 3: מנגנון הגנה (Fallback) ---
-            if (!absoluteMaxDate || isNaN(absoluteMaxDate.getTime())) {
+            // --- שלב 3: מנגנון הגנה (Fallback) אם לא נשלף תאריך max מה-Domain ---
+            if (!rawMaxDate || isNaN(rawMaxDate.getTime())) {
                 let absoluteMinDate = targetFilter.minValue ? new Date(targetFilter.minValue.value) : new Date(2023, 0, 1);
                 let temporaryFutureDate = new Date(2030, 11, 31);
                 
@@ -83,23 +83,23 @@
                             let parsedDate = new Date(rawCell.value);
                             if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() > maxTime) {
                                 maxTime = parsedDate.getTime();
-                                absoluteMaxDate = parsedDate;
+                                rawMaxDate = parsedDate;
                             }
                         }
                     });
                 }
             }
 
-            if (!absoluteMaxDate || isNaN(absoluteMaxDate.getTime())) {
-                absoluteMaxDate = new Date();
+            if (!rawMaxDate || isNaN(rawMaxDate.getTime())) {
+                rawMaxDate = new Date();
             }
 
-            // --- שלב 4: טראנקייט קשיח לתחילת החודש (יום 1) עבור ה-Max ---
-            let maxYear = absoluteMaxDate.getFullYear();
-            let maxMonth = absoluteMaxDate.getMonth();
+            // --- שלב 4: טראנקייט קשיח לתחילת החודש של המקסימום (לדוגמה: 31.10.2026 יהפוך ל-01.10.2026) ---
+            let maxYear = rawMaxDate.getFullYear();
+            let maxMonth = rawMaxDate.getMonth(); // 0-indexed (9 = אוקטובר)
             let truncatedMaxDate = new Date(maxYear, maxMonth, 1);
 
-            // --- שלב 5: חישוב מדויק של מינוס 13 חודשים (תמיד יום 1 בחודש) ---
+            // --- שלב 5: חישוב מדויק של מינוס 13 חודשים החל מה-1 בחודש (01.10.2026 פחות 13 חודשים = 01.10.2025) ---
             let calculatedMinDate = new Date(maxYear, maxMonth - 13, 1);
 
             // --- שלב 6: עדכון הפילטר בטאבלו ---
@@ -108,7 +108,7 @@
                 max: truncatedMaxDate
             });
 
-            // --- שלב 7: עדכון ה-UI (כולל הצגת מספר הגרסה למניעת ספק) ---
+            // --- שלב 7: עדכון ה-UI למשתמש ---
             renderUI(
                 calculatedMinDate.toLocaleDateString('he-IL'), 
                 truncatedMaxDate.toLocaleDateString('he-IL'), 
