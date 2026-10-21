@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v4.4.0-UTCStringFix";
+    const VERSION = "v4.5.0-FinalFix";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -94,26 +94,20 @@
                 rawMaxDate = new Date();
             }
 
-            // --- שלב 4: שימוש ב-UTC בלבד למניעת זליגות אזורי זמן ---
+            // --- שלב 4: שימוש ב-UTC למניעת זליגות אזורי זמן ---
             let maxYear = rawMaxDate.getUTCFullYear() || rawMaxDate.getFullYear();
             let maxMonth = rawMaxDate.getUTCMonth() !== undefined ? rawMaxDate.getUTCMonth() : rawMaxDate.getMonth();
 
-            // בניית תאריכים מנוטרלי אזור זמן לחלוטין (UTC 00:00:00)
             let truncatedMaxDate = new Date(Date.UTC(maxYear, maxMonth, 1));
             let calculatedMinDate = new Date(Date.UTC(maxYear - 1, maxMonth, 1));
 
-            console.log("[DateUpdater] Applying UTC Filter Range:", {
-                min: truncatedMaxDate.toISOString(),
-                max: calculatedMinDate.toISOString()
-            });
-
-            // --- שלב 5: החלת הפילטר בטאבלו ---
+            // --- שלב 5: החלת הפילטר בטאבלו (Min = שנה אחורה, Max = תחילת החודש הנוכחי) ---
             await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
                 min: calculatedMinDate,
                 max: truncatedMaxDate
             });
 
-            // --- שלב 6: עדכון ה-UI למשתמש ---
+            // --- שלב 6: עדכון ה-UI למשתמש (סדר תצוגה נכון: מ-Min עד Max) ---
             renderUI(
                 calculatedMinDate.toLocaleDateString('he-IL', {timeZone: 'UTC'}), 
                 truncatedMaxDate.toLocaleDateString('he-IL', {timeZone: 'UTC'}), 
@@ -221,7 +215,7 @@
                     פילטר: <strong>${filterName}</strong>
                 </div>
                 <div class="date-display">
-                    <span class="date-label">טווח UTC מנוטרל (שנה אחורה):</span>
+                    <span class="date-label">טווח מעודכן (שנה אחורה):</span>
                     <span class="date-value">${startDateFormatted} - ${endDateFormatted}</span>
                 </div>
             </div>
