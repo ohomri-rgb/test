@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v4.3.0-RobustFix";
+    const VERSION = "v4.4.0-UTCStringFix";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -56,13 +56,13 @@
                     rawMaxDate = new Date(domainInfo.max.value);
                 }
             } catch (domainError) {
-                console.warn("[Tableau Extension] Could not fetch domain via getDomainAsync, using fallback logic.", domainError);
+                console.warn("[DateUpdater] Could not fetch domain via getDomainAsync, using fallback logic.", domainError);
             }
 
             // --- שלב 3: מנגנון הגנה (Fallback) ---
             if (!rawMaxDate || isNaN(rawMaxDate.getTime())) {
-                let absoluteMinDate = targetFilter.minValue ? new Date(targetFilter.minValue.value) : new Date(2023, 0, 1);
-                let temporaryFutureDate = new Date(2030, 11, 31);
+                let absoluteMinDate = targetFilter.minValue ? new Date(targetFilter.minValue.value) : new Date(Date.UTC(2023, 0, 1));
+                let temporaryFutureDate = new Date(Date.UTC(2030, 11, 31));
                 
                 await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
                     min: absoluteMinDate,
@@ -94,34 +94,29 @@
                 rawMaxDate = new Date();
             }
 
-            // --- שלב 4: חילוץ שנה וחודש בצורה בטוחה (תמיכה ב-UTC למניעת הפרשי שעות) ---
+            // --- שלב 4: שימוש ב-UTC בלבד למניעת זליגות אזורי זמן ---
             let maxYear = rawMaxDate.getUTCFullYear() || rawMaxDate.getFullYear();
             let maxMonth = rawMaxDate.getUTCMonth() !== undefined ? rawMaxDate.getUTCMonth() : rawMaxDate.getMonth();
 
-            // יצירת התאריכים בצורה מדויקת לתחילת החודש
-            let truncatedMaxDate = new Date(maxYear, maxMonth, 1);
-            let calculatedMinDate = new Date(maxYear - 1, maxMonth, 1);
+            // בניית תאריכים מנוטרלי אזור זמן לחלוטין (UTC 00:00:00)
+            let truncatedMaxDate = new Date(Date.UTC(maxYear, maxMonth, 1));
+            let calculatedMinDate = new Date(Date.UTC(maxYear - 1, maxMonth, 1));
 
-            console.log("[DateUpdater] Applying Filter Range:", {
-                min: calculatedMinDate.toLocaleDateString(),
-                max: truncatedMaxDate.toLocaleDateString()
+            console.log("[DateUpdater] Applying UTC Filter Range:", {
+                min: truncatedMaxDate.toISOString(),
+                max: calculatedMinDate.toISOString()
             });
 
-            // --- שלב 5: עדכון הפילטר בטאבלו עם מעטפת שגיאות מפורטת ---
-            try {
-                await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
-                    min: calculatedMinDate,
-                    max: truncatedMaxDate
-                });
-            } catch (filterError) {
-                console.error("[DateUpdater] applyRangeFilterAsync failed:", filterError);
-                throw new Error(`שגיאה בהחלת הפילטר בטאבלו: ${filterError.message}`);
-            }
+            // --- שלב 5: החלת הפילטר בטאבלו ---
+            await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
+                min: calculatedMinDate,
+                max: truncatedMaxDate
+            });
 
             // --- שלב 6: עדכון ה-UI למשתמש ---
             renderUI(
-                calculatedMinDate.toLocaleDateString('he-IL'), 
-                truncatedMaxDate.toLocaleDateString('he-IL'), 
+                calculatedMinDate.toLocaleDateString('he-IL', {timeZone: 'UTC'}), 
+                truncatedMaxDate.toLocaleDateString('he-IL', {timeZone: 'UTC'}), 
                 targetFilterName, 
                 targetWorksheet.name,
                 VERSION
@@ -226,7 +221,7 @@
                     פילטר: <strong>${filterName}</strong>
                 </div>
                 <div class="date-display">
-                    <span class="date-label">טווח מוצלח (שנה אחורה):</span>
+                    <span class="date-label">טווח UTC מנוטרל (שנה אחורה):</span>
                     <span class="date-value">${startDateFormatted} - ${endDateFormatted}</span>
                 </div>
             </div>
