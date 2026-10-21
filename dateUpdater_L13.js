@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v4.1.0-ISOStringLock";
+    const VERSION = "v4.2.0-ExactYearMatch";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -59,7 +59,7 @@
                 console.warn("[Tableau Extension] Could not fetch domain via getDomainAsync, using fallback logic.");
             }
 
-            // --- שלב 3: מנגנון הגנה (Fallback) אם לא נשלף תאריך max מה-Domain ---
+            // --- שלב 3: מנגנון הגנה (Fallback) ---
             if (!rawMaxDate || isNaN(rawMaxDate.getTime())) {
                 let absoluteMinDate = targetFilter.minValue ? new Date(targetFilter.minValue.value) : new Date(2023, 0, 1);
                 let temporaryFutureDate = new Date(2030, 11, 31);
@@ -94,24 +94,23 @@
                 rawMaxDate = new Date();
             }
 
-            // --- שלב 4: חילוץ שנה וחודש בצורה בטוחה לחלוטין ---
+            // --- שלב 4: חישוב תאריכים מדויק ---
             let maxYear = rawMaxDate.getFullYear();
-            let maxMonth = rawMaxDate.getMonth(); // 0 עד 11
+            let maxMonth = rawMaxDate.getMonth(); // 0 עד 11 (למשל 9 עבור אוקטובר)
 
-            // נחשב את תאריך ההתחלה (מינוס 13 חודשים) ואת תאריך הסיום (החודש הנוכחי)
-            // ניצור אובייקטי Date רגילים שמוגדרים מראש על ה-1 בחודש בשעה 00:00:00 מקומי
-            let calculatedMinDate = new Date(maxYear, maxMonth - 13, 1, 0, 0, 0);
+            // תאריך סיום: ה-1 לחודש הנוכחי (למשל 01.10.2026)
             let truncatedMaxDate = new Date(maxYear, maxMonth, 1, 0, 0, 0);
 
-            // --- שלב 5: שליחה לטאבלו ---
-            // טאבלו תומך באובייקטי Date, אך כדי למנוע בעיות המרה של אזורי זמן, 
-            // נשלח אותם ישירות. 
+            // תאריך התחלה: בדיוק שנה אחורה באותו החודש (למשל 01.10.2025)
+            let calculatedMinDate = new Date(maxYear - 1, maxMonth, 1, 0, 0, 0);
+
+            // --- שלב 5: עדכון הפילטר בטאבלו ---
             await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
                 min: calculatedMinDate,
                 max: truncatedMaxDate
             });
 
-            // --- שלב 6: עדכון ה-UI למשתמש עם מספר הגרסה החדש ---
+            // --- שלב 6: עדכון ה-UI למשתמש ---
             renderUI(
                 calculatedMinDate.toLocaleDateString('he-IL'), 
                 truncatedMaxDate.toLocaleDateString('he-IL'), 
@@ -214,12 +213,12 @@
                     </div>
                     <span class="version-badge">${version}</span>
                 </div>
-                .meta-info {
+                <div class="meta-info">
                     גיליון: <strong>${sheetName}</strong><br>
                     פילטר: <strong>${filterName}</strong>
                 </div>
                 <div class="date-display">
-                    <span class="date-label">טווח מדויק (13 חודשים):</span>
+                    <span class="date-label">טווח מדויק (שנה אחורה):</span>
                     <span class="date-value">${startDateFormatted} - ${endDateFormatted}</span>
                 </div>
             </div>
