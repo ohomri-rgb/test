@@ -1,5 +1,5 @@
 (function() {
-    const VERSION = "v4.6.0-SafeDomainGuard";
+    const VERSION = "v4.7.0-BulletproofReset";
     let attempts = 0;
     const MAX_ATTEMPTS = 400;
 
@@ -46,79 +46,87 @@
             }
 
             const targetFilterName = targetFilter.fieldName;
-            
-            // --- שלב 2: שליפת תאריך המקסימום הגולמי עם בדיקת תקינות קשיחה ---
             let rawMaxDate = null;
 
+            // --- שלב 2: ניסיון שליפה עדין מה-Domain, עם תפיסת שגיאות למניעת 400 Internal Error ---
             try {
                 const domainInfo = await targetFilter.getDomainAsync();
-                if (domainInfo && domainInfo.max && domainInfo.max.value) {
-                    const parsed = new Date(domainInfo.max.value);
-                    if (!isNaN(parsed.getTime())) {
-                        rawMaxDate = parsed;
+                if (domainInfo) {
+                    // לעיתים ה-max נמצא ב-max.value ולעיתים ישירות ב-max
+                    const maxVal = domainInfo.max && domainInfo.max.value ? domainInfo.max.value : domainInfo.max;
+                    if (maxVal) {
+                        const parsed = new Date(maxVal);
+                        if (!isNaN(parsed.getTime())) {
+                            rawMaxDate = parsed;
+                        }
                     }
                 }
             } catch (domainError) {
-                console.warn("[DateUpdater] Could not fetch domain via getDomainAsync, using fallback logic.", domainError);
+                console.warn("[DateUpdater] Domain fetch skipped or failed, moving to summary data fallback.", domainError);
             }
 
-            // --- שלב 3: מנגנון הגנה (Fallback) אם הדומיין ריק או מחזיר שגיאה ---
+            // --- שלב 3: מנגנון Fallback חסין לחלוטין (מופעל גם כשהפילטר מנוקה / Reset) ---
             if (!rawMaxDate || isNaN(rawMaxDate.getTime())) {
-                // בדיקה האם יש לפילטר minValue תקין
-                let absoluteMinDate = (targetFilter.minValue && targetFilter.minValue.value && !isNaN(new Date(targetFilter.minValue.value).getTime())) 
-                    ? new Date(targetFilter.minValue.value) 
-                    : new Date(Date.UTC(2023, 0, 1));
-                
-                let temporaryFutureDate = new Date(Date.UTC(2030, 11, 31));
-                
-                await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
-                    min: absoluteMinDate,
-                    max: temporaryFutureDate
-                });
-
-                const summaryData = await targetWorksheet.getSummaryDataAsync();
-                const dateColumn = summaryData.columns.find(col => 
-                    col.dataType === 'date' || col.dataType === 'date-time' || col.fieldName === targetFilterName
-                );
-                
-                if (dateColumn && summaryData.data.length > 0) {
-                    const dateColumnIndex = dateColumn.index;
-                    let maxTime = 0;
-                    summaryData.data.forEach(row => {
-                        const rawCell = row[dateColumnIndex];
-                        if (rawCell && rawCell.value) {
-                            let parsedDate = new Date(rawCell.value);
-                            if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() > maxTime) {
-                                maxTime = parsedDate.getTime();
-                                rawMaxDate = parsedDate;
+                try {
+                    const summaryData = await targetWorksheet.getSummaryDataAsync();
+                    const dateColumn = summaryData.columns.find(col => 
+                        col.dataType === 'date' || col.dataType === 'date-time' || col.fieldName === targetFilterName
+                    );
+                    
+                    if (dateColumn && summaryData.data.length > 0) {
+                        const dateColumnIndex = dateColumn.index;
+                        let maxTime = 0;
+                        summaryData.data.forEach(row => {
+                            const rawCell = row[dateColumnIndex];
+                            if (rawCell && rawCell.value) {
+                                let parsedDate = new Date(rawCell.value);
+                                if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() > maxTime) {
+                                    maxTime = parsedDate.getTime();
+                                    rawMaxDate = parsedDate;
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
+                } catch (summaryError) {
+                    console.warn("[DateUpdater] Summary data fallback failed, using current date.", summaryError);
                 }
             }
 
-            // הגנה סופית בהחלט: אם עדיין אין תאריך תקין, ניקח את התאריך הנוכחי
+            // ברירת מחדל סופית אם כל השאר נכשל
             if (!rawMaxDate || isNaN(rawMaxDate.getTime())) {
                 rawMaxDate = new Date();
             }
 
-            // --- שלב 4: חילוץ שנה וחודש בצורה בטוחה לחלוטין ---
+            // --- שלב 4: חילוץ שנה וחודש בצורה בטוחה (UTC) ---
             let maxYear = !isNaN(rawMaxDate.getUTCFullYear()) ? rawMaxDate.getUTCFullYear() : rawMaxDate.getFullYear();
             let maxMonth = !isNaN(rawMaxDate.getUTCMonth()) ? rawMaxDate.getUTCMonth() : rawMaxDate.getMonth();
 
             let truncatedMaxDate = new Date(Date.UTC(maxYear, maxMonth, 1));
             let calculatedMinDate = new Date(Date.UTC(maxYear - 1, maxMonth, 1));
 
-            // בדיקת ביטחון נוספת לפני שליחה לטאבלו
             if (isNaN(truncatedMaxDate.getTime()) || isNaN(calculatedMinDate.getTime())) {
-                throw new Error("התאריכים המחושבים אינם תקינים (NaN).");
+                throw new Error("התאריכים המחושבים אינם תקינים.");
             }
 
-            // --- שלב 5: החלת הפילטר בטאבלו ---
-            await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
-                min: calculatedMinDate,
-                max: truncatedMaxDate
-            });
+            // --- שלב 5: החלת הפילטר בטאבלו עם מעטפת הגנה מפני שגיאות 400 ---
+            try {
+                await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
+                    min: calculatedMinDate,
+                    max: truncatedMaxDate
+                });
+            } catch (applyErr) {
+                console.error("[DateUpdater] Direct apply failed, attempting reset sequence...", applyErr);
+                // במקרה קיצוני של דחייה מצד השרת, ננסה לאפס לטווח רחב ואז לצמצם
+                let safeMin = new Date(Date.UTC(maxYear - 3, 0, 1));
+                let safeMax = new Date(Date.UTC(maxYear, 11, 31));
+                await targetWorksheet.applyRangeFilterAsync(targetFilterName, { min: safeMin, max: safeMax });
+                
+                // ניסיון שני תחולה סופית
+                await targetWorksheet.applyRangeFilterAsync(targetFilterName, {
+                    min: calculatedMinDate,
+                    max: truncatedMaxDate
+                });
+            }
 
             // --- שלב 6: עדכון ה-UI למשתמש ---
             renderUI(
